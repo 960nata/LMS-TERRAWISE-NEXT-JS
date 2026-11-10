@@ -1,5 +1,16 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Database
+
+This project uses Drizzle ORM with PostgreSQL. To use Supabase, set these variables in `.env.local` (or `.env`):
+
+```env
+DATABASE_URL="postgresql://postgres.<PROJECT_REF>:<URL_ENCODED_PASSWORD>@<POOLER_HOST>:6543/postgres?pgbouncer=true"
+DIRECT_URL="postgresql://postgres.<PROJECT_REF>:<URL_ENCODED_PASSWORD>@<POOLER_HOST>:5432/postgres"
+```
+
+Use the transaction-mode pooler URL for `DATABASE_URL` and the session-mode pooler URL for `DIRECT_URL`. The app uses `DATABASE_URL`; Drizzle Kit uses `DIRECT_URL` for schema changes. URL-encode special characters in the password (for example, `@` as `%40`). Keep these files out of Git and do not commit database credentials.
+
 ## Getting Started
 
 First, run the development server:
