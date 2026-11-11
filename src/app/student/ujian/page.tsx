@@ -16,6 +16,7 @@ export default async function StudentUjianListPage() {
       .select({
         id: ujian.id,
         title: ujian.title,
+        tipe: ujian.tipe,
         startTime: ujian.startTime,
         endTime: ujian.endTime,
         durationMinutes: ujian.durationMinutes,
@@ -34,9 +35,24 @@ export default async function StudentUjianListPage() {
   const done = rows.filter((u) => attemptMap.has(u.id)).length;
   const live = rows.filter((u) => !attemptMap.has(u.id) && u.startTime <= now && now <= u.endTime).length;
 
+  const tipeBadge = (tipe: string) => {
+    switch (tipe) {
+      case "MULTIPLE_CHOICE":
+        return <Badge tone="black">Pilihan Ganda</Badge>;
+      case "ESSAY":
+        return <Badge tone="black">Essay</Badge>;
+      case "MIXED":
+      default:
+        return <Badge tone="orange">Campuran (PG + Essay)</Badge>;
+    }
+  };
+
   return (
     <>
-      <PageHeader title="Ujian Saya" description="Ikuti ujian yang telah dijadwalkan" />
+      <PageHeader
+        title="Ujian Saya"
+        description="Ikuti sesi evaluasi pembelajaran (Pilihan Ganda, Essay, atau Campuran) berbasis timer yang aktif."
+      />
 
       <StatGrid>
         <StatCard value={rows.length} label="Total Ujian" />
@@ -46,13 +62,13 @@ export default async function StudentUjianListPage() {
 
       {rows.length === 0 ? (
         <div className="rounded-xl border border-gray-100 md:rounded-2xl">
-          <EmptyState icon="quiz" text="Tidak ada ujian." />
+          <EmptyState icon="quiz" text="Tidak ada ujian untuk kelas Anda saat ini." />
         </div>
       ) : (
         <DataTable
           columns={[
             { label: "No" },
-            { label: "Ujian" },
+            { label: "Ujian & Tipe" },
             { label: "Jadwal", className: "hidden md:table-cell" },
             { label: "Status", className: "hidden md:table-cell" },
             { label: "Aksi", className: "text-right" },
@@ -66,19 +82,21 @@ export default async function StudentUjianListPage() {
               <tr key={u.id} className="transition-colors hover:bg-gray-50/50">
                 <td className={`${tdClass} text-gray-400`}>{i + 1}</td>
                 <td className={tdClass}>
-                  <p className="font-bold">{u.title}</p>
-                  <p className="mt-1 text-[10px] text-gray-400">
-                    {u.kelasName} · {u.durationMinutes} menit
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
+                    {tipeBadge(u.tipe)}
+                    <p className="font-bold text-black">{u.title}</p>
+                  </div>
+                  <p className="text-[10px] text-gray-400">
+                    {u.kelasName} · Durasi: {u.durationMinutes} menit
                   </p>
                 </td>
                 <td className={`${tdClass} hidden text-gray-500 md:table-cell`}>
-                  {formatDate(u.startTime)}
-                  <br />
-                  <span className="text-[10px] text-gray-400">s/d {formatDate(u.endTime)}</span>
+                  <p className="font-medium">{formatDate(u.startTime)}</p>
+                  <p className="text-[10px] text-gray-400">s/d {formatDate(u.endTime)}</p>
                 </td>
                 <td className={`${tdClass} hidden md:table-cell`}>
                   {attempt ? (
-                    <Badge tone="green">Selesai{attempt.score != null ? ` · ${attempt.score}` : ""}</Badge>
+                    <Badge tone="green">Selesai{attempt.score != null ? ` · Skor ${attempt.score}` : ""}</Badge>
                   ) : upcoming ? (
                     <Badge tone="gray">Belum dimulai</Badge>
                   ) : closed ? (
@@ -90,14 +108,14 @@ export default async function StudentUjianListPage() {
                 <td className={`${tdClass} text-right`}>
                   <Link
                     href={`/student/ujian/${u.id}`}
-                    className={`inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-[10px] font-bold tracking-widest uppercase transition-colors ${
+                    className={`inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-bold uppercase transition-colors ${
                       attempt || upcoming || closed
-                        ? "border border-gray-200 hover:border-black"
+                        ? "border border-gray-200 text-black hover:border-black"
                         : "bg-black text-white hover:bg-gray-800"
                     }`}
                   >
                     <Icon name={attempt ? "visibility" : "play_arrow"} size={14} />
-                    {attempt ? "Lihat" : "Kerjakan"}
+                    {attempt ? "Lihat Hasil" : "Kerjakan Ujian →"}
                   </Link>
                 </td>
               </tr>

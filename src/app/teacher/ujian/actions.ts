@@ -1,6 +1,6 @@
 "use server";
 import { db } from "@/lib/db";
-import { ujian, soal, notifications, enrollments } from "@/lib/db/schema";
+import { ujian, soal, ujianAttempts, notifications, enrollments } from "@/lib/db/schema";
 import { requireClassManager } from "@/lib/access";
 import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
@@ -9,9 +9,14 @@ export async function createUjian(formData: FormData) {
   const kelasId = String(formData.get("kelasId") ?? "");
   const { id: authorId } = await requireClassManager(kelasId);
   const title = formData.get("title") as string;
+  const rawTipe = (formData.get("tipe") as string) || "MULTIPLE_CHOICE";
+  const tipe = (["MULTIPLE_CHOICE", "ESSAY", "MIXED"].includes(rawTipe)
+    ? rawTipe
+    : "MULTIPLE_CHOICE") as "MULTIPLE_CHOICE" | "ESSAY" | "MIXED";
 
   await db.insert(ujian).values({
     title,
+    tipe,
     startTime: new Date(formData.get("startTime") as string),
     endTime: new Date(formData.get("endTime") as string),
     durationMinutes: Number(formData.get("durationMinutes")),
@@ -19,12 +24,27 @@ export async function createUjian(formData: FormData) {
     authorId,
   });
 
-  const students = await db.select({ studentId: enrollments.studentId }).from(enrollments).where(eq(enrollments.kelasId, kelasId));
+  const students = await db
+    .select({ studentId: enrollments.studentId })
+    .from(enrollments)
+    .where(eq(enrollments.kelasId, kelasId));
+
   if (students.length > 0) {
+    const tipeLabel =
+      tipe === "MULTIPLE_CHOICE"
+        ? "Pilihan Ganda"
+        : tipe === "ESSAY"
+        ? "Essay"
+        : "Campuran (PG & Essay)";
     await db.insert(notifications).values(
-      students.map((s) => ({ userId: s.studentId, title: "Ujian Baru", message: `Ada ujian baru: ${title}` }))
+      students.map((s) => ({
+        userId: s.studentId,
+        title: `Ujian Baru [${tipeLabel}]`,
+        message: `Ujian "${title}" telah dijadwalkan untuk kelas Anda.`,
+      }))
     );
   }
+
   revalidatePath("/teacher/ujian");
   revalidatePath("/admin/ujian");
   revalidatePath("/superadmin/ujian");
@@ -32,44 +52,118 @@ export async function createUjian(formData: FormData) {
 }
 
 export async function addSoal(ujianId: string, formData: FormData) {
-  const [exam] = await db.select({ kelasId: ujian.kelasId }).from(ujian).where(eq(ujian.id, ujianId)).limit(1);
+  const [exam] = await db
+    .select({ kelasId: ujian.kelasId, tipe: ujian.tipe })
+    .from(ujian)
+    .where(eq(ujian.id, ujianId))
+    .limit(1);
+
   if (!exam) throw new Error("Ujian tidak ditemukan");
   await requireClassManager(exam.kelasId);
-  const options = [
-    formData.get("optionA") as string,
-    formData.get("optionB") as string,
-    formData.get("optionC") as string,
-    formData.get("optionD") as string,
-  ];
-  await db.insert(soal).values({
-    ujianId,
-    question: formData.get("question") as string,
-    options,
-    correctAnswer: formData.get("correctAnswer") as string,
-    points: Number(formData.get("points")) || 1,
-  });
+
+  const rawType = (formData.get("type") as string) || (exam.tipe === "ESSAY" ? "ESSAY" : "MULTIPLE_CHOICE");
+  const type = (rawType === "ESSAY" ? "ESSAY" : "MULTIPLE_CHOICE") as "MULTIPLE_CHOICE" | "ESSAY";
+  const question = formData.get("question") as string;
+  const points = Number(formData.get("points")) || 10;
+
+  if (type === "MULTIPLE_CHOICE") {
+    const options = [
+      formData.get("optionA") as string,
+      formData.get("optionB") as string,
+      formData.get("optionC") as string,
+      formData.get("optionD") as string,
+    ];
+    const correctAnswer = (formData.get("correctAnswer") as string)?.toUpperCase();
+    await db.insert(soal).values({
+      ujianId,
+      type: "MULTIPLE_CHOICE",
+      question,
+      options,
+      correctAnswer,
+      points,
+    });
+  } else {
+    const rubric = (formData.get("rubric") as string) ?? null;
+    await db.insert(soal).values({
+      ujianId,
+      type: "ESSAY",
+      question,
+      points,
+      rubric,
+    });
+  }
+
   revalidatePath(`/teacher/ujian/${ujianId}`);
+  revalidatePath(`/admin/ujian/${ujianId}`);
+  revalidatePath(`/superadmin/ujian/${ujianId}`);
+  revalidatePath("/teacher/ujian");
 }
 
 export async function deleteUjian(formData: FormData) {
   const ujianId = formData.get("ujianId") as string;
-  const [exam] = await db.select({ kelasId: ujian.kelasId }).from(ujian).where(eq(ujian.id, ujianId)).limit(1);
+  const [exam] = await db
+    .select({ kelasId: ujian.kelasId })
+    .from(ujian)
+    .where(eq(ujian.id, ujianId))
+    .limit(1);
+
   if (!exam) throw new Error("Ujian tidak ditemukan");
   await requireClassManager(exam.kelasId);
+
+  await db.delete(ujianAttempts).where(eq(ujianAttempts.ujianId, ujianId));
   await db.delete(soal).where(eq(soal.ujianId, ujianId));
   await db.delete(ujian).where(eq(ujian.id, ujianId));
+
   revalidatePath("/teacher/ujian");
   revalidatePath("/admin/ujian");
   revalidatePath("/superadmin/ujian");
   revalidatePath("/student/ujian");
-  revalidatePath("/student/ujian");
 }
 
 export async function deleteSoal(ujianId: string, soalId: string) {
-  const [exam] = await db.select({ kelasId: ujian.kelasId }).from(ujian).where(eq(ujian.id, ujianId)).limit(1);
+  const [exam] = await db
+    .select({ kelasId: ujian.kelasId })
+    .from(ujian)
+    .where(eq(ujian.id, ujianId))
+    .limit(1);
+
   if (!exam) throw new Error("Ujian tidak ditemukan");
   await requireClassManager(exam.kelasId);
+
   await db.delete(soal).where(eq(soal.id, soalId));
   revalidatePath(`/teacher/ujian/${ujianId}`);
+  revalidatePath(`/admin/ujian/${ujianId}`);
+  revalidatePath(`/superadmin/ujian/${ujianId}`);
+  revalidatePath("/teacher/ujian");
 }
 
+export async function gradeExamAttempt(formData: FormData) {
+  const attemptId = formData.get("attemptId") as string;
+  const score = Number(formData.get("score"));
+  const feedback = (formData.get("feedback") as string) ?? "";
+
+  const [attempt] = await db
+    .select({ ujianId: ujianAttempts.ujianId })
+    .from(ujianAttempts)
+    .where(eq(ujianAttempts.id, attemptId))
+    .limit(1);
+
+  if (!attempt) throw new Error("Percobaan ujian tidak ditemukan");
+  const [exam] = await db
+    .select({ kelasId: ujian.kelasId })
+    .from(ujian)
+    .where(eq(ujian.id, attempt.ujianId))
+    .limit(1);
+
+  if (!exam) throw new Error("Ujian tidak ditemukan");
+  await requireClassManager(exam.kelasId);
+
+  await db
+    .update(ujianAttempts)
+    .set({ score, feedback })
+    .where(eq(ujianAttempts.id, attemptId));
+
+  revalidatePath(`/teacher/ujian/${attempt.ujianId}`);
+  revalidatePath(`/admin/ujian/${attempt.ujianId}`);
+  revalidatePath(`/superadmin/ujian/${attempt.ujianId}`);
+}

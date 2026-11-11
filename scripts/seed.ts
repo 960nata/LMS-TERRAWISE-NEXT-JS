@@ -5,6 +5,7 @@ import {
   enrollments,
   materi,
   tugas,
+  tugasSoal,
   tugasSubmissions,
   ujian,
   soal,
@@ -15,13 +16,14 @@ import {
 import bcrypt from "bcryptjs";
 
 async function main() {
-  console.log("🌱 Menjalankan Seeding Terrawise.id LMS murni...");
+  console.log("🌱 Menjalankan Seeding Terrawise.id LMS murni (4 Tipe Tugas & 3 Tipe Ujian)...");
 
   // 1. Bersihkan data lama
   await db.delete(ujianAttempts);
   await db.delete(soal);
   await db.delete(ujian);
   await db.delete(tugasSubmissions);
+  await db.delete(tugasSoal);
   await db.delete(tugas);
   await db.delete(materi);
   await db.delete(enrollments);
@@ -124,7 +126,7 @@ async function main() {
     })
     .returning();
 
-  // 4. Enrollments (Daftarkan siswa ke seluruh kelas agar tidak kosongan)
+  // 4. Enrollments (Daftarkan siswa ke seluruh kelas)
   await db.insert(enrollments).values([
     { studentId: siswa1.id, kelasId: kelasX.id },
     { studentId: siswa1.id, kelasId: kelasXI.id },
@@ -202,16 +204,18 @@ async function main() {
     },
   ]);
 
-  // 6. Tugas Pembelajaran (6 Tugas Lengkap)
+  // 6. Tugas Pembelajaran (Lengkap 4 TIPE TUGAS)
   const now = Date.now();
   const day = 24 * 60 * 60 * 1000;
 
-  const [tugas1] = await db
+  // TIPE 1: Pilihan Ganda (MULTIPLE_CHOICE)
+  const [tugasPG] = await db
     .insert(tugas)
     .values({
-      title: "Laporan Praktikum Titrasi Asam Basa dan Perhitungan pH",
+      title: "Kuis Pilihan Ganda: Logika Algoritma & Tipe Data",
       description:
-        "Susun laporan praktikum titrasi larutan HCl menggunakan larutan standar NaOH 0.1 M. Cantumkan kurva titrasi, titik ekuivalen, dan perhitungan konsentrasi sampel.",
+        "Uji pemahaman mandiri materi logika komputasi dan struktur kontrol percabangan. Pilihlah opsi jawaban yang paling tepat. Nilai akan terhitung otomatis.",
+      tipe: "MULTIPLE_CHOICE",
       dueDate: new Date(now + 7 * day),
       maxScore: 100,
       kelasId: kelasX.id,
@@ -219,75 +223,143 @@ async function main() {
     })
     .returning();
 
-  const [tugas2] = await db
+  const [tugasPGSoal1, tugasPGSoal2, tugasPGSoal3, tugasPGSoal4] = await db
+    .insert(tugasSoal)
+    .values([
+      {
+        tugasId: tugasPG.id,
+        type: "MULTIPLE_CHOICE",
+        question: "Manakah di bawah ini yang merupakan tipe data bilangan bulat pada sebagian besar bahasa pemrograman?",
+        options: ["Integer", "Float", "Boolean", "String"],
+        correctAnswer: "A",
+        points: 25,
+        order: 1,
+      },
+      {
+        tugasId: tugasPG.id,
+        type: "MULTIPLE_CHOICE",
+        question: "Simbol flowchart yang digunakan untuk menyatakan kondisi keputusan (decision) adalah...",
+        options: ["Belah Ketupat (Diamond)", "Persegi Panjang", "Oval / Elips", "Jajar Genjang"],
+        correctAnswer: "A",
+        points: 25,
+        order: 2,
+      },
+      {
+        tugasId: tugasPG.id,
+        type: "MULTIPLE_CHOICE",
+        question: "Operasi logika yang menghasilkan nilai TRUE jika hanya salah satu operand bernilai TRUE adalah...",
+        options: ["XOR", "AND", "OR", "NOT"],
+        correctAnswer: "A",
+        points: 25,
+        order: 3,
+      },
+      {
+        tugasId: tugasPG.id,
+        type: "MULTIPLE_CHOICE",
+        question: "Struktur perulangan yang pasti dijalankan minimal satu kali sebelum pengecekan kondisi adalah...",
+        options: ["do-while", "for", "while", "foreach"],
+        correctAnswer: "A",
+        points: 25,
+        order: 4,
+      },
+    ])
+    .returning();
+
+  // Submission untuk Tugas PG (Siswa 1 sudah mengerjakan dengan auto-grade 100)
+  await db.insert(tugasSubmissions).values({
+    tugasId: tugasPG.id,
+    studentId: siswa1.id,
+    answers: {
+      [tugasPGSoal1.id]: "A",
+      [tugasPGSoal2.id]: "A",
+      [tugasPGSoal3.id]: "A",
+      [tugasPGSoal4.id]: "A",
+    },
+    score: 100,
+    feedback: "Sangat baik! Seluruh jawaban kuis pilihan ganda benar.",
+    submittedAt: new Date(now - 1 * day),
+    gradedAt: new Date(now - 1 * day),
+  });
+
+  // TIPE 2: Essay (ESSAY)
+  const [tugasEssay] = await db
     .insert(tugas)
     .values({
-      title: "Implementasi Algoritma Sorting dan Searching Menggunakan TypeScript",
+      title: "Tugas Soal Essay: Analisis Arsitektur OOP & Normalisasi Database",
       description:
-        "Buat fungsi algoritma Quick Sort dan Binary Search. Sertakan analisis kompleksitas waktu (Big-O) dan pengujian dengan 10.000 data acak.",
-      dueDate: new Date(now + 5 * day),
+        "Jawab pertanyaan essay berikut dengan argumentasi teknis, contoh kode atau skema relevan. Jawaban akan dinilai langsung oleh guru pengampu.",
+      tipe: "ESSAY",
+      dueDate: new Date(now + 8 * day),
       maxScore: 100,
       kelasId: kelasXI.id,
       authorId: guru.id,
     })
     .returning();
 
-  const [tugas3] = await db
+  const [tugasEssaySoal1, tugasEssaySoal2, tugasEssaySoal3] = await db
+    .insert(tugasSoal)
+    .values([
+      {
+        tugasId: tugasEssay.id,
+        type: "ESSAY",
+        question: "Jelaskan konsep Polymorphism dalam OOP dan berikan studi kasus penggunaannya dalam sistem perbankan!",
+        points: 35,
+        order: 1,
+      },
+      {
+        tugasId: tugasEssay.id,
+        type: "ESSAY",
+        question: "Apa perbedaan mendasar antara First Normal Form (1NF) dan Second Normal Form (2NF)?",
+        points: 35,
+        order: 2,
+      },
+      {
+        tugasId: tugasEssay.id,
+        type: "ESSAY",
+        question: "Mengapa dependensi transitif harus dihilangkan pada Third Normal Form (3NF)? Berikan dampaknya terhadap integritas data!",
+        points: 30,
+        order: 3,
+      },
+    ])
+    .returning();
+
+  // Submission Tugas Essay (Siswa 2 sudah mengumpulkan, sudah dinilai guru)
+  await db.insert(tugasSubmissions).values({
+    tugasId: tugasEssay.id,
+    studentId: siswa2.id,
+    answers: {
+      [tugasEssaySoal1.id]:
+        "Polymorphism memungkinkan satu interface merepresentasikan aksi yang berbeda. Contoh perbankan: class Rekening memiliki method hitungBunga() yang di-override oleh RekeningTabungan, RekeningGiro, dan Deposito.",
+      [tugasEssaySoal2.id]:
+        "1NF mensyaratkan setiap kolom bernilai atomik. 2NF mensyaratkan telah memenuhi 1NF dan tidak ada dependensi parsial terhadap primary key komposit.",
+      [tugasEssaySoal3.id]:
+        "Dependensi transitif menyebabkan anomali update dan redundansi data. Dengan 3NF, setiap atribut non-kunci hanya bergantung langsung pada primary key.",
+    },
+    answerText: "Jawaban essay lengkap telah dicantumkan per pertanyaan.",
+    score: 95,
+    feedback: "Penjelasan mengenai dependensi fungsional dan contoh perbankan sangat komprehensif!",
+    submittedAt: new Date(now - 12 * 60 * 60 * 1000),
+    gradedAt: new Date(now - 2 * 60 * 60 * 1000),
+  });
+
+  // TIPE 3: Mandiri (MANDIRI)
+  const [tugasMandiri] = await db
     .insert(tugas)
     .values({
-      title: "Makalah Analisis Dampak Perubahan Iklim Terhadap Keanekaragaman Hayati",
+      title: "Tugas Mandiri: Laporan Praktikum Titrasi Asam Basa & Kimia Larutan",
       description:
-        "Kaji literatur ilmiah mengenai korelasi peningkatan suhu global terhadap pola migrasi fauna lokal. Minimal 5 halaman dengan sitasi ilmiah valid.",
+        "Susun laporan praktikum titrasi larutan HCl menggunakan larutan standar NaOH 0.1 M. Cantumkan kurva titrasi, titik ekuivalen, dan perhitungan konsentrasi sampel. Pengumpulan berupa uraian ringkasan dan tautan PDF laporan.",
+      tipe: "MANDIRI",
       dueDate: new Date(now + 6 * day),
-      maxScore: 100,
-      kelasId: kelasXII.id,
-      authorId: guru2.id,
-    })
-    .returning();
-
-  const [tugas4] = await db
-    .insert(tugas)
-    .values({
-      title: "Desain ERD dan Skema Database Relasional Sistem Informasi Sekolah",
-      description:
-        "Rancang diagram relasi entitas untuk modul guru, kelas, siswa, tugas, dan nilai. Pastikan skema tabel telah memenuhi bentuk normal ketiga (3NF).",
-      dueDate: new Date(now + 9 * day),
-      maxScore: 100,
-      kelasId: kelasXI.id,
-      authorId: guru.id,
-    })
-    .returning();
-
-  const [tugas5] = await db
-    .insert(tugas)
-    .values({
-      title: "Studi Kasus Hukum Kekekalan Energi Mekanik pada Lintasan Miring",
-      description:
-        "Hitung kecepatan teoritis benda meluncur tanpa gesekan dibandingkan hasil eksperimen fisik di laboratorium. Tuliskan analisis ralat persentase kesalahan.",
-      dueDate: new Date(now + 12 * day),
       maxScore: 100,
       kelasId: kelasX.id,
       authorId: guru.id,
     })
     .returning();
 
-  const [tugas6] = await db
-    .insert(tugas)
-    .values({
-      title: "Proposal Penelitian Bioteknologi Fermentasi Pangan Lokal",
-      description:
-        "Rancang proposal ilmiah inovasi pangan fermentasi memanfaatkan bahan baku lokal. Tuliskan latar belakang, hipotesis, dan metodologi eksperimen terinci.",
-      dueDate: new Date(now + 14 * day),
-      maxScore: 100,
-      kelasId: kelasXII.id,
-      authorId: guru2.id,
-    })
-    .returning();
-
-  // 7. Pengumpulan Tugas (Submissions)
-  // Siswa 1 telah mengumpulkan tugas 1 (Sudah dinilai oleh guru)
+  // Submission Tugas Mandiri oleh Siswa 1
   await db.insert(tugasSubmissions).values({
-    tugasId: tugas1.id,
+    tugasId: tugasMandiri.id,
     studentId: siswa1.id,
     answerText:
       "Titrasi dilakukan sebanyak 3 kali pengulangan (triplo). Rata-rata volume NaOH yang dibutuhkan untuk mencapai titik akhir fenolftalein adalah 18.4 mL. Konsentrasi HCl terhitung sebesar 0.092 M.",
@@ -298,24 +370,54 @@ async function main() {
     gradedAt: new Date(now - 12 * 60 * 60 * 1000),
   });
 
-  // Siswa 2 mengumpulkan tugas 2 (Belum dinilai, siap dinilai Guru/Admin)
+  // TIPE 4: Kelompok (KELOMPOK)
+  const [tugasKelompok] = await db
+    .insert(tugas)
+    .values({
+      title: "Proyek Kelompok: Riset Rekayasa Bioteknologi & Pangan Berkelanjutan",
+      description:
+        "Bentuk kelompok beranggotakan 2-4 siswa. Buat proposal karya ilmiah inovasi produk fermentasi pangan lokal berdaya saing tinggi. Cantumkan nama kelompok, daftar anggota, dan link repository/dokumen.",
+      tipe: "KELOMPOK",
+      dueDate: new Date(now + 14 * day),
+      maxScore: 100,
+      kelasId: kelasXII.id,
+      authorId: guru2.id,
+    })
+    .returning();
+
+  // Submission Tugas Kelompok oleh Siswa 1 & Siswa 2
   await db.insert(tugasSubmissions).values({
-    tugasId: tugas2.id,
-    studentId: siswa2.id,
+    tugasId: tugasKelompok.id,
+    studentId: siswa1.id,
+    groupName: "Kelompok Alpha - BioSains",
+    groupMembers: "1. Ahmad Rizki (Ketua), 2. Siti Nurhaliza (Peneliti), 3. Budi Setiawan (Dokumentasi)",
     answerText:
-      "Kode program telah diuji menggunakan Node.js. Algoritma Quick Sort menunjukkan rata-rata eksekusi 4.2ms untuk 10.000 elemen, sedangkan Binary Search mampu menemukan data dalam 14 iterasi maksimal.",
-    fileUrl: "https://github.com/example/ts-algorithms-sorting",
-    score: null,
+      "Kelompok kami meneliti optimasi fermentasi tempe gembus menggunakan inokulum Rhizopus oligosporus terkontrol untuk meningkatkan profil asam amino esensial.",
+    fileUrl: "https://github.com/terrawise-bio/proposal-bioteknologi-alpha",
+    score: null, // Belum dinilai guru (siap dinilai!)
     feedback: null,
-    submittedAt: new Date(now - 3 * 60 * 60 * 1000),
+    submittedAt: new Date(now - 4 * 60 * 60 * 1000),
   });
 
-  // 8. Ujian-Ujian (4 Ujian Lengkap dengan Soal Pilihan Ganda)
-  // Ujian 1: UTS Sains Terapan (Ahmad Rizki sudah selesai nilai 100, Siti Nurhaliza belum)
-  const [exam1] = await db
+  // Tugas Mandiri Tambahan
+  await db.insert(tugas).values({
+    title: "Tugas Mandiri: Implementasi Algoritma Sorting Menggunakan TypeScript",
+    description:
+      "Buat implementasi Quick Sort dan Merge Sort. Tuliskan analisis efisiensi waktu eksekusi terhadap 5.000 elemen data acak.",
+    tipe: "MANDIRI",
+    dueDate: new Date(now + 10 * day),
+    maxScore: 100,
+    kelasId: kelasXI.id,
+    authorId: guru.id,
+  });
+
+  // 7. UJIAN-UJIAN (Lengkap 3 TIPE UJIAN)
+  // UJIAN TIPE 1: Pilihan Ganda (MULTIPLE_CHOICE)
+  const [examPG] = await db
     .insert(ujian)
     .values({
-      title: "Ujian Tengah Semester - Sains Terapan & Logika",
+      title: "UTS Pilihan Ganda - Sains Terapan & Logika Komputasi",
+      tipe: "MULTIPLE_CHOICE",
       startTime: new Date(now - 2 * 60 * 60 * 1000),
       endTime: new Date(now + 14 * day),
       durationMinutes: 60,
@@ -324,64 +426,72 @@ async function main() {
     })
     .returning();
 
-  await db.insert(soal).values([
-    {
-      ujianId: exam1.id,
-      question: "Variabel dalam eksperimen sains yang sengaja diubah-ubah oleh peneliti untuk menguji hipotesis disebut...",
-      options: ["Variabel bebas (independen)", "Variabel terikat (dependen)", "Variabel kontrol", "Variabel pengganggu"],
-      correctAnswer: "Variabel bebas (independen)",
-      points: 25,
-      order: 1,
-    },
-    {
-      ujianId: exam1.id,
-      question: "Rentang nilai pH untuk larutan yang bersifat asam kuat adalah...",
-      options: ["pH 1 - 3", "pH 6 - 8", "pH 9 - 11", "pH 12 - 14"],
-      correctAnswer: "pH 1 - 3",
-      points: 25,
-      order: 2,
-    },
-    {
-      ujianId: exam1.id,
-      question: "Kompleksitas waktu rata-rata (average time complexity) dari algoritma Binary Search adalah...",
-      options: ["O(log n)", "O(n)", "O(n log n)", "O(n²)"],
-      correctAnswer: "O(log n)",
-      points: 25,
-      order: 3,
-    },
-    {
-      ujianId: exam1.id,
-      question: "Satuan standar Sistem Internasional (SI) untuk besaran gaya adalah...",
-      options: ["Newton (N)", "Joule (J)", "Watt (W)", "Pascal (Pa)"],
-      correctAnswer: "Newton (N)",
-      points: 25,
-      order: 4,
-    },
-  ]);
+  const [examPGSoal1, examPGSoal2, examPGSoal3, examPGSoal4] = await db
+    .insert(soal)
+    .values([
+      {
+        ujianId: examPG.id,
+        type: "MULTIPLE_CHOICE",
+        question: "Variabel dalam eksperimen sains yang sengaja diubah-ubah oleh peneliti untuk menguji hipotesis disebut...",
+        options: ["Variabel bebas (independen)", "Variabel terikat (dependen)", "Variabel kontrol", "Variabel pengganggu"],
+        correctAnswer: "A",
+        points: 25,
+        order: 1,
+      },
+      {
+        ujianId: examPG.id,
+        type: "MULTIPLE_CHOICE",
+        question: "Rentang nilai pH untuk larutan yang bersifat asam kuat adalah...",
+        options: ["pH 1 - 3", "pH 6 - 8", "pH 9 - 11", "pH 12 - 14"],
+        correctAnswer: "A",
+        points: 25,
+        order: 2,
+      },
+      {
+        ujianId: examPG.id,
+        type: "MULTIPLE_CHOICE",
+        question: "Kompleksitas waktu rata-rata (average time complexity) dari algoritma Binary Search adalah...",
+        options: ["O(log n)", "O(n)", "O(n log n)", "O(n²)"],
+        correctAnswer: "A",
+        points: 25,
+        order: 3,
+      },
+      {
+        ujianId: examPG.id,
+        type: "MULTIPLE_CHOICE",
+        question: "Satuan standar Sistem Internasional (SI) untuk besaran gaya adalah...",
+        options: ["Newton (N)", "Joule (J)", "Watt (W)", "Pascal (Pa)"],
+        correctAnswer: "A",
+        points: 25,
+        order: 4,
+      },
+    ])
+    .returning();
 
-  // Attempt Ujian 1 oleh Ahmad Rizki
+  // Attempt Ujian PG oleh Ahmad Rizki
   await db.insert(ujianAttempts).values({
-    ujianId: exam1.id,
+    ujianId: examPG.id,
     studentId: siswa1.id,
     answers: {
-      "1": "Variabel bebas (independen)",
-      "2": "pH 1 - 3",
-      "3": "O(log n)",
-      "4": "Newton (N)",
+      [examPGSoal1.id]: "A",
+      [examPGSoal2.id]: "A",
+      [examPGSoal3.id]: "A",
+      [examPGSoal4.id]: "A",
     },
     score: 100,
     startedAt: new Date(now - 1 * day),
     submittedAt: new Date(now - 1 * day + 32 * 60 * 1000),
   });
 
-  // Ujian 2: Kuis Harian 01 (SEDANG AKTIF / LIVE! Belum dikerjakan, siap dikerjakan siswa!)
-  const [exam2] = await db
+  // UJIAN TIPE 2: Essay (ESSAY)
+  const [examEssay] = await db
     .insert(ujian)
     .values({
-      title: "Kuis Harian 01 - Struktur Data dan Algoritma Dasar",
+      title: "Ujian Essay Teori - Rekayasa Algoritma & Perancangan Basis Data",
+      tipe: "ESSAY",
       startTime: new Date(now - 1 * 60 * 60 * 1000),
       endTime: new Date(now + 10 * day),
-      durationMinutes: 45,
+      durationMinutes: 75,
       kelasId: kelasXI.id,
       authorId: guru.id,
     })
@@ -389,68 +499,50 @@ async function main() {
 
   await db.insert(soal).values([
     {
-      ujianId: exam2.id,
-      question: "Prinsip operasi struktur data Stack (Tumpukan) adalah...",
-      options: ["LIFO (Last In First Out)", "FIFO (First In First Out)", "LILO (Last In Last Out)", "Random Access"],
-      correctAnswer: "LIFO (Last In First Out)",
-      points: 20,
+      ujianId: examEssay.id,
+      type: "ESSAY",
+      question: "Bandingkan kelebihan dan kekurangan antara struktur data Stack dan Queue dalam implementasi sistem antrean server!",
+      rubric: "Kesesuaian prinsip LIFO/FIFO (15 poin), contoh kasus sistem server (15 poin), efisiensi memori (10 poin).",
+      points: 40,
       order: 1,
     },
     {
-      ujianId: exam2.id,
-      question: "Struktur data yang beroperasi dengan prinsip antrean First In First Out (FIFO) adalah...",
-      options: ["Queue", "Stack", "Binary Tree", "Heap"],
-      correctAnswer: "Queue",
-      points: 20,
+      ujianId: examEssay.id,
+      type: "ESSAY",
+      question: "Jelaskan langkah demi langkah proses penyeimbangan pohon biner (AVL Tree Rotation) ketika terjadi ketidakseimbangan faktor!",
+      rubric: "Ketepatan penjelasan Single Rotation vs Double Rotation (20 poin), ilustrasi skematis (10 poin).",
+      points: 30,
       order: 2,
     },
     {
-      ujianId: exam2.id,
-      question: "Keuntungan utama menggunakan Linked List dibandingkan Array statis adalah...",
-      options: [
-        "Ukuran memori dinamis dan fleksibel saat penambahan elemen",
-        "Akses elemen acak (random access) sangat cepat O(1)",
-        "Menggunakan memori lebih sedikit tanpa pointer",
-        "Elemen selalu tersimpan berurutan dalam memori fisik",
-      ],
-      correctAnswer: "Ukuran memori dinamis dan fleksibel saat penambahan elemen",
-      points: 20,
+      ujianId: examEssay.id,
+      type: "ESSAY",
+      question: "Mengapa transaksi database harus mematuhi prinsip ACID? Jelaskan risiko jika sifat 'Isolation' dilanggar!",
+      rubric: "Uraian 4 komponen ACID (15 poin), penjelasan dirty read / race condition (15 poin).",
+      points: 30,
       order: 3,
-    },
-    {
-      ujianId: exam2.id,
-      question: "Algoritma pencarian yang mengharuskan kumpulan data sudah terurut (sorted) terlebih dahulu adalah...",
-      options: ["Binary Search", "Linear Search", "Breadth First Search", "Depth First Search"],
-      correctAnswer: "Binary Search",
-      points: 20,
-      order: 4,
-    },
-    {
-      ujianId: exam2.id,
-      question: "Teknik optimasi algoritma yang menyimpan hasil sub-masalah agar tidak dihitung ulang disebut...",
-      options: ["Memoization / Dynamic Programming", "Brute Force", "Greedy Algorithm", "Backtracking"],
-      correctAnswer: "Memoization / Dynamic Programming",
-      points: 20,
-      order: 5,
     },
   ]);
 
-  // Ujian 3: Simulasi Ujian Akhir (SEDANG AKTIF / LIVE! Belum dikerjakan!)
-  const [exam3] = await db
+  // UJIAN TIPE 3: Campuran (MIXED: PG + Essay)
+  const [examMixed] = await db
     .insert(ujian)
     .values({
-      title: "Simulasi Ujian Akhir - Keseimbangan Kimia & Termodinamika",
+      title: "Ujian Komprehensif (Campuran PG & Essay) - Keseimbangan Kimia & Termodinamika",
+      tipe: "MIXED",
       startTime: new Date(now - 30 * 60 * 1000),
       endTime: new Date(now + 12 * day),
-      durationMinutes: 50,
+      durationMinutes: 90,
       kelasId: kelasX.id,
       authorId: guru.id,
     })
     .returning();
 
   await db.insert(soal).values([
+    // Bagian Pilihan Ganda
     {
-      ujianId: exam3.id,
+      ujianId: examMixed.id,
+      type: "MULTIPLE_CHOICE",
       question: "Menurut Asas Le Chatelier, jika tekanan pada sistem kesetimbangan gas diperbesar, maka kesetimbangan akan bergeser ke arah...",
       options: [
         "Jumlah koefisien gas yang lebih kecil",
@@ -458,12 +550,13 @@ async function main() {
         "Reaksi endoterm",
         "Tidak mengalami pergeseran sama sekali",
       ],
-      correctAnswer: "Jumlah koefisien gas yang lebih kecil",
+      correctAnswer: "A",
       points: 20,
       order: 1,
     },
     {
-      ujianId: exam3.id,
+      ujianId: examMixed.id,
+      type: "MULTIPLE_CHOICE",
       question: "Hukum Termodinamika Pertama pada dasarnya menyatakan prinsip...",
       options: [
         "Hukum Kekekalan Energi",
@@ -471,119 +564,73 @@ async function main() {
         "Ketiadaan Nol Mutlak",
         "Percepatan Gravitasi Universal",
       ],
-      correctAnswer: "Hukum Kekekalan Energi",
+      correctAnswer: "A",
       points: 20,
       order: 2,
     },
     {
-      ujianId: exam3.id,
-      question: "Reaksi kimia yang menyerap kalor dari lingkungan ke dalam sistem sehingga suhu lingkungan turun disebut...",
-      options: ["Reaksi endoterm", "Reaksi eksoterm", "Reaksi redoks", "Reaksi pembakaran"],
-      correctAnswer: "Reaksi endoterm",
+      ujianId: examMixed.id,
+      type: "MULTIPLE_CHOICE",
+      question: "Zat yang berfungsi mempercepat laju reaksi kimia tanpa ikut terkonsumsi permanen adalah...",
+      options: ["Katalisator", "Inhibitor", "Reaktan pembatas", "Indikator universal"],
+      correctAnswer: "A",
       points: 20,
       order: 3,
     },
+    // Bagian Essay
     {
-      ujianId: exam3.id,
-      question: "Zat yang berfungsi mempercepat laju reaksi kimia tanpa ikut terkonsumsi secara permanen adalah...",
-      options: ["Katalisator", "Inhibitor", "Reaktan pembatas", "Indikator universal"],
-      correctAnswer: "Katalisator",
+      ujianId: examMixed.id,
+      type: "ESSAY",
+      question: "Hitung perubahan entalpi pembentukan standar (ΔHf°) dan jelaskan diagram energi reaksi endoterm berikut!",
+      rubric: "Rumus hukum Hess (10 poin), perhitungan angka benar (10 poin).",
       points: 20,
       order: 4,
     },
     {
-      ujianId: exam3.id,
-      question: "Nilai tetapan kesetimbangan (Kc) hanya dipengaruhi secara langsung oleh perubahan...",
-      options: ["Suhu sistem", "Konsentrasi reaktan", "Tekanan total", "Volume wadah"],
-      correctAnswer: "Suhu sistem",
+      ujianId: examMixed.id,
+      type: "ESSAY",
+      question: "Uraikan penerapan prinsip kesetimbangan kimia dalam proses Haber-Bosch untuk sintesis amonia industri!",
+      rubric: "Kondisi suhu kompromi (10 poin), pengaruh katalis besi (10 poin).",
       points: 20,
       order: 5,
     },
   ]);
 
-  // Ujian 4: Kuis Praktikum (SEDANG AKTIF / LIVE! Belum dikerjakan!)
-  const [exam4] = await db
-    .insert(ujian)
-    .values({
-      title: "Kuis Praktikum - Genetika & Hereditas Mendel",
-      startTime: new Date(now - 15 * 60 * 1000),
-      endTime: new Date(now + 8 * day),
-      durationMinutes: 30,
-      kelasId: kelasXII.id,
-      authorId: guru2.id,
-    })
-    .returning();
-
-  await db.insert(soal).values([
-    {
-      ujianId: exam4.id,
-      question: "Rasio fenotip persilangan monohibrid dominan penuh pada generasi F2 menurut Hukum Mendel I adalah...",
-      options: ["3 : 1", "1 : 2 : 1", "9 : 3 : 3 : 1", "1 : 1"],
-      correctAnswer: "3 : 1",
-      points: 25,
-      order: 1,
-    },
-    {
-      ujianId: exam4.id,
-      question: "Basa nitrogen penyusun molekul DNA yang berpasangan dengan Adenin melalui dua ikatan hidrogen adalah...",
-      options: ["Timin", "Guanin", "Sitosin", "Urasil"],
-      correctAnswer: "Timin",
-      points: 25,
-      order: 2,
-    },
-    {
-      ujianId: exam4.id,
-      question: "Peristiwa perubahan struktur atau urutan nukleotida pada materi genetik suatu organisme disebut...",
-      options: ["Mutasi", "Transkripsi", "Translasi", "Replikasi"],
-      correctAnswer: "Mutasi",
-      points: 25,
-      order: 3,
-    },
-    {
-      ujianId: exam4.id,
-      question: "Enzim yang berfungsi memotong pita DNA pada sekuens spesifik dalam teknologi rekayasa genetika adalah...",
-      options: ["Enzim Endonuklease Restriksi", "Enzim DNA Ligase", "Enzim Amilase", "Enzim Polimerase"],
-      correctAnswer: "Enzim Endonuklease Restriksi",
-      points: 25,
-      order: 4,
-    },
-  ]);
-
-  // 9. Notifikasi Sistem
+  // 8. Notifikasi Sistem
   await db.insert(notifications).values([
     {
       userId: siswa1.id,
-      title: "Kuis Harian 01 Tersedia",
-      message: "Dr. Budi Santoso telah menerbitkan Kuis Harian 01 untuk kelas XI MIPA 2. Silakan kerjakan sebelum tenggat.",
+      title: "Tugas Baru: Kuis Pilihan Ganda",
+      message: "Dr. Budi Santoso telah menambahkan Kuis Pilihan Ganda untuk kelas X MIPA 1.",
       isRead: false,
     },
     {
       userId: siswa1.id,
       title: "Nilai Tugas Diperbarui",
-      message: "Tugas Laporan Praktikum Titrasi Anda telah dinilai dengan skor 92/100.",
+      message: "Kuis Pilihan Ganda Anda telah dinilai otomatis dengan skor 100/100.",
       isRead: false,
     },
     {
       userId: siswa2.id,
-      title: "Simulasi Ujian Akhir Siap Dikerjakan",
-      message: "Simulasi Ujian Akhir Keseimbangan Kimia telah dibuka di kelas X MIPA 1.",
+      title: "Ujian Campuran Siap Dikerjakan",
+      message: "Ujian Komprehensif (Campuran PG & Essay) telah dibuka di kelas X MIPA 1.",
       isRead: false,
     },
     {
       userId: guru.id,
-      title: "Pengumpulan Tugas Baru Masuk",
-      message: "Siti Nurhaliza telah mengumpulkan tugas Implementasi Algoritma Sorting.",
+      title: "Pengumpulan Tugas Masuk",
+      message: "Kelompok Alpha - BioSains telah mengumpulkan proposal tugas kelompok.",
       isRead: false,
     },
     {
       userId: admin.id,
-      title: "Sistem Terrawise Beroperasi Normal",
-      message: "Seluruh modul pembelajaran, tugas, dan ujian aktif terhubung ke database.",
+      title: "Sistem Terrawise Beroperasi Penuh",
+      message: "4 Tipe Tugas dan 3 Tipe Ujian telah aktif dan terkonfigurasi pada basis data.",
       isRead: true,
     },
   ]);
 
-  // 10. Tiket Keluhan & Bantuan
+  // 9. Tiket Keluhan & Bantuan
   await db.insert(complaints).values([
     {
       userId: siswa1.id,
@@ -598,8 +645,8 @@ async function main() {
     },
   ]);
 
-  console.log("✅ Seeding Terrawise.id LMS murni (Bebas IoT) berhasil!");
-  console.log("\n--- AKUN DEMO TERRAWISE.ID (PERSIS DENGAN LARAVEL) ---");
+  console.log("✅ Seeding Terrawise.id LMS murni (4 Tipe Tugas & 3 Tipe Ujian) BERHASIL!");
+  console.log("\n--- AKUN DEMO TERRAWISE.ID ---");
   console.log("👑 Super Admin : superadmin@terrawise.id | password: superadmin123");
   console.log("⚙️ Admin       : admin@terrawise.id      | password: admin123");
   console.log("👨‍🏫 Guru        : guru@terrawise.id       | password: guru123");

@@ -1,6 +1,6 @@
 # Terrawise.id — Modern High-Contrast Learning Management System (LMS)
 
-Port modern dan lengkap dari ekosistem **[Terrawise.id](https://github.com/960nata/Terrawise.id)** ke stack performa tinggi **Next.js 16 (App Router + Turbopack)**, **Tailwind CSS v4**, **Drizzle ORM**, **PostgreSQL / Supabase**, dan **NextAuth v5 (Auth.js)**.
+
 
 Menghadirkan seluruh fungsi pembelajaran daring (LMS), asesmen ujian interaktif, penugasan berwaktu, dan evaluasi hasil belajar dengan identitas visual khas Terrawise: *Minimalist, High Contrast, Precision-Engineered UI*.
 

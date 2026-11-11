@@ -35,6 +35,7 @@ export default async function UjianPage() {
     .select({
       id: ujian.id,
       title: ujian.title,
+      tipe: ujian.tipe,
       startTime: ujian.startTime,
       endTime: ujian.endTime,
       durationMinutes: ujian.durationMinutes,
@@ -54,17 +55,29 @@ export default async function UjianPage() {
   const live = myUjian.filter((u) => status(u) === "live").length;
   const upcoming = myUjian.filter((u) => status(u) === "upcoming").length;
 
+  const tipeBadge = (tipe: string) => {
+    switch (tipe) {
+      case "MULTIPLE_CHOICE":
+        return <Badge tone="black">Pilihan Ganda</Badge>;
+      case "ESSAY":
+        return <Badge tone="black">Essay</Badge>;
+      case "MIXED":
+      default:
+        return <Badge tone="orange">Campuran (PG + Essay)</Badge>;
+    }
+  };
+
   return (
     <>
       <PageHeader
         title="Manajemen Ujian"
-        description="Buat, edit, dan kelola ujian dengan fitur lengkap"
+        description="Buat dan kelola 3 tipe ujian (Pilihan Ganda, Essay, Campuran), atur durasi timer, dan input bank soal."
         action={
           <ActionModal
             triggerText="Buat Ujian"
             triggerIcon="add"
-            title="Buat Ujian Baru"
-            description="Jadwalkan sesi ujian pilihan ganda berbasis timer untuk siswa di kelas."
+            title="Buat Ujian Baru (3 Tipe Ujian)"
+            description="Jadwalkan sesi ujian berbasis timer untuk siswa dengan tipe Pilihan Ganda, Essay, atau Campuran."
           >
             <form action={createUjian} className="space-y-4">
               <div>
@@ -78,10 +91,27 @@ export default async function UjianPage() {
                   ))}
                 </select>
               </div>
+
+              <div>
+                <Label htmlFor="tipe">Tipe Ujian</Label>
+                <select id="tipe" name="tipe" required className={inputClass}>
+                  <option value="MULTIPLE_CHOICE">1. Pilihan Ganda (Auto-Grading)</option>
+                  <option value="ESSAY">2. Soal Essay (Penilaian Manual Guru)</option>
+                  <option value="MIXED">3. Campuran (Pilihan Ganda &amp; Soal Essay)</option>
+                </select>
+              </div>
+
               <div>
                 <Label htmlFor="title">Judul Ujian</Label>
-                <input id="title" name="title" placeholder="cth: Evaluasi Tengah Semester - Sains Terapan" required className={inputClass} />
+                <input
+                  id="title"
+                  name="title"
+                  placeholder="cth: UTS Teori Komputasi atau Ujian Akhir Semester"
+                  required
+                  className={inputClass}
+                />
               </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="startTime">Waktu Mulai</Label>
@@ -92,10 +122,20 @@ export default async function UjianPage() {
                   <input id="endTime" name="endTime" type="datetime-local" required className={inputClass} />
                 </div>
               </div>
+
               <div>
                 <Label htmlFor="durationMinutes">Durasi Pengerjaan (Menit)</Label>
-                <input id="durationMinutes" name="durationMinutes" type="number" placeholder="90" required className={inputClass} />
+                <input
+                  id="durationMinutes"
+                  name="durationMinutes"
+                  type="number"
+                  placeholder="60"
+                  defaultValue={60}
+                  required
+                  className={inputClass}
+                />
               </div>
+
               <div className="pt-2">
                 <button type="submit" className={`${primaryButtonClass} w-full`}>
                   <Icon name="add" size={18} /> Simpan &amp; Terbitkan Jadwal Ujian
@@ -113,8 +153,33 @@ export default async function UjianPage() {
         <StatCard value={myUjian.length - live - upcoming} label="Selesai" />
       </StatGrid>
 
-      <section>
-        <SectionTitle icon="list_alt" title="Daftar Ujian" />
+      {/* Ringkasan 3 Tipe Ujian */}
+      <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="rounded-xl border border-black bg-white p-3 text-center">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Tipe 1</p>
+          <p className="font-bold text-xs sm:text-sm mt-0.5">Pilihan Ganda</p>
+          <p className="text-[10px] text-gray-500 mt-1">
+            {myUjian.filter((u) => u.tipe === "MULTIPLE_CHOICE").length} Ujian
+          </p>
+        </div>
+        <div className="rounded-xl border border-black bg-white p-3 text-center">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Tipe 2</p>
+          <p className="font-bold text-xs sm:text-sm mt-0.5">Essay</p>
+          <p className="text-[10px] text-gray-500 mt-1">
+            {myUjian.filter((u) => u.tipe === "ESSAY").length} Ujian
+          </p>
+        </div>
+        <div className="rounded-xl border border-black bg-white p-3 text-center">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Tipe 3</p>
+          <p className="font-bold text-xs sm:text-sm mt-0.5">Campuran (PG + Essay)</p>
+          <p className="text-[10px] text-gray-500 mt-1">
+            {myUjian.filter((u) => u.tipe === "MIXED").length} Ujian
+          </p>
+        </div>
+      </div>
+
+      <section className="mt-8">
+        <SectionTitle icon="list_alt" title="Daftar Ujian Terjadwal" />
         {myUjian.length === 0 ? (
           <div className="rounded-xl border border-gray-100 md:rounded-2xl">
             <EmptyState icon="quiz" text="Belum ada ujian." />
@@ -123,10 +188,10 @@ export default async function UjianPage() {
           <DataTable
             columns={[
               { label: "No" },
-              { label: "Judul" },
+              { label: "Judul & Tipe" },
               { label: "Kelas", className: "hidden md:table-cell" },
-              { label: "Jadwal", className: "hidden lg:table-cell" },
-              { label: "Soal", className: "hidden md:table-cell" },
+              { label: "Jadwal & Durasi", className: "hidden lg:table-cell" },
+              { label: "Jumlah Soal", className: "hidden md:table-cell" },
               { label: "Aksi", className: "text-right" },
             ]}
           >
@@ -137,6 +202,7 @@ export default async function UjianPage() {
                   <td className={`${tdClass} text-gray-400`}>{i + 1}</td>
                   <td className={tdClass}>
                     <div className="flex flex-wrap items-center gap-2">
+                      {tipeBadge(u.tipe)}
                       <p className="font-bold">{u.title}</p>
                       {s === "live" ? (
                         <Badge tone="green">Berlangsung</Badge>
@@ -146,24 +212,29 @@ export default async function UjianPage() {
                         <Badge tone="gray">Selesai</Badge>
                       )}
                     </div>
-                    <p className="mt-1 text-[10px] text-gray-400">{u.durationMinutes} menit</p>
+                    <p className="mt-1 text-[10px] text-gray-400">Durasi: {u.durationMinutes} menit</p>
                   </td>
                   <td className={`${tdClass} hidden text-gray-500 md:table-cell`}>{u.kelasName}</td>
-                  <td className={`${tdClass} hidden text-gray-500 lg:table-cell`}>{formatDate(u.startTime)}</td>
-                  <td className={`${tdClass} hidden text-gray-500 md:table-cell`}>{u.soalCount}</td>
+                  <td className={`${tdClass} hidden text-gray-500 lg:table-cell`}>
+                    <p className="font-medium">{formatDate(u.startTime)}</p>
+                    <p className="text-[10px] text-gray-400">s/d {formatDate(u.endTime)}</p>
+                  </td>
+                  <td className={`${tdClass} hidden text-gray-500 md:table-cell font-bold`}>
+                    {u.soalCount} Soal
+                  </td>
                   <td className={`${tdClass} text-right`}>
                     <div className="flex items-center justify-end gap-2">
                       <Link
                         href={`${basePath}/ujian/${u.id}`}
-                        className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1.5 text-[10px] font-bold tracking-widest uppercase transition-colors hover:border-black hover:bg-black hover:text-white"
+                        className="inline-flex items-center gap-1 rounded-lg border border-black px-3 py-1.5 text-xs font-bold text-black transition-colors hover:bg-black hover:text-white"
                       >
-                        <Icon name="edit" size={14} /> Kelola Soal
+                        <Icon name="edit" size={14} /> Kelola Soal &amp; Nilai
                       </Link>
                       <form action={deleteUjian}>
                         <input type="hidden" name="ujianId" value={u.id} />
                         <button
                           type="submit"
-                          className="rounded-lg border border-red-200 px-2 py-1.5 text-[10px] font-bold tracking-widest text-red-600 uppercase transition-colors hover:bg-red-50"
+                          className="rounded-lg border border-red-200 px-2 py-1.5 text-xs font-bold text-red-600 transition-colors hover:bg-red-50"
                         >
                           Hapus
                         </button>

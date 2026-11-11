@@ -18,6 +18,24 @@ export const roleEnum = pgEnum("role", [
   "STUDENT",
 ]);
 
+export const tugasTypeEnum = pgEnum("tugas_type", [
+  "MULTIPLE_CHOICE", // Tipe 1: Pilihan Ganda (auto-graded)
+  "ESSAY",           // Tipe 2: Essay (soal essay & penilaian manual)
+  "MANDIRI",         // Tipe 3: Mandiri (tugas uraian individual / file upload)
+  "KELOMPOK",        // Tipe 4: Kelompok (proyek kolaborasi kelompok)
+]);
+
+export const ujianTypeEnum = pgEnum("ujian_type", [
+  "MULTIPLE_CHOICE", // Pilihan Ganda
+  "ESSAY",           // Essay
+  "MIXED",           // Campuran (Pilihan Ganda & Essay)
+]);
+
+export const questionTypeEnum = pgEnum("question_type", [
+  "MULTIPLE_CHOICE",
+  "ESSAY",
+]);
+
 export const users = pgTable("users", {
   id: text("id").primaryKey().$defaultFn(() => createId()),
   name: text("name").notNull(),
@@ -67,12 +85,24 @@ export const tugas = pgTable("tugas", {
   id: text("id").primaryKey().$defaultFn(() => createId()),
   title: text("title").notNull(),
   description: text("description").notNull(),
+  tipe: tugasTypeEnum("tipe").notNull().default("MANDIRI"),
   dueDate: timestamp("due_date").notNull(),
   maxScore: integer("max_score").notNull().default(100),
   kelasId: text("kelas_id").notNull().references(() => kelas.id),
   authorId: text("author_id").notNull().references(() => users.id),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const tugasSoal = pgTable("tugas_soal", {
+  id: text("id").primaryKey().$defaultFn(() => createId()),
+  tugasId: text("tugas_id").notNull().references(() => tugas.id, { onDelete: "cascade" }),
+  type: questionTypeEnum("type").notNull().default("MULTIPLE_CHOICE"),
+  question: text("question").notNull(),
+  options: jsonb("options"), // { a: "...", b: "...", c: "...", d: "..." } or array ["...", "..."]
+  correctAnswer: text("correct_answer"), // "A", "B", "C", "D"
+  points: integer("points").notNull().default(10),
+  order: integer("order").notNull().default(0),
 });
 
 export const tugasSubmissions = pgTable(
@@ -83,6 +113,9 @@ export const tugasSubmissions = pgTable(
     studentId: text("student_id").notNull().references(() => users.id),
     fileUrl: text("file_url"),
     answerText: text("answer_text"),
+    answers: jsonb("answers"), // Per-question answers for MULTIPLE_CHOICE or ESSAY
+    groupName: text("group_name"), // For KELOMPOK
+    groupMembers: text("group_members"), // For KELOMPOK
     score: integer("score"),
     feedback: text("feedback"),
     submittedAt: timestamp("submitted_at").notNull().defaultNow(),
@@ -96,6 +129,7 @@ export const tugasSubmissions = pgTable(
 export const ujian = pgTable("ujian", {
   id: text("id").primaryKey().$defaultFn(() => createId()),
   title: text("title").notNull(),
+  tipe: ujianTypeEnum("tipe").notNull().default("MULTIPLE_CHOICE"),
   startTime: timestamp("start_time").notNull(),
   endTime: timestamp("end_time").notNull(),
   durationMinutes: integer("duration_minutes").notNull(),
@@ -108,11 +142,13 @@ export const ujian = pgTable("ujian", {
 export const soal = pgTable("soal", {
   id: text("id").primaryKey().$defaultFn(() => createId()),
   ujianId: text("ujian_id").notNull().references(() => ujian.id),
+  type: questionTypeEnum("type").notNull().default("MULTIPLE_CHOICE"),
   question: text("question").notNull(),
-  options: jsonb("options").notNull(),
-  correctAnswer: text("correct_answer").notNull(),
-  points: integer("points").notNull().default(1),
+  options: jsonb("options"), // array of choices for MULTIPLE_CHOICE, null for ESSAY
+  correctAnswer: text("correct_answer"), // correct choice string, null for ESSAY
+  points: integer("points").notNull().default(10),
   order: integer("order").notNull().default(0),
+  rubric: text("rubric"), // Rubric / scoring guidelines for ESSAY
 });
 
 export const ujianAttempts = pgTable(
@@ -121,8 +157,10 @@ export const ujianAttempts = pgTable(
     id: text("id").primaryKey().$defaultFn(() => createId()),
     ujianId: text("ujian_id").notNull().references(() => ujian.id),
     studentId: text("student_id").notNull().references(() => users.id),
-    answers: jsonb("answers").notNull(),
+    answers: jsonb("answers").notNull(), // { [soalId]: answerString }
+    essayScores: jsonb("essay_scores"), // { [soalId]: awardedPoints }
     score: integer("score"),
+    feedback: text("feedback"),
     startedAt: timestamp("started_at").notNull().defaultNow(),
     submittedAt: timestamp("submitted_at"),
   },
@@ -162,7 +200,12 @@ export const kelasRelations = relations(kelas, ({ one, many }) => ({
 export const tugasRelations = relations(tugas, ({ one, many }) => ({
   kelas: one(kelas, { fields: [tugas.kelasId], references: [kelas.id] }),
   author: one(users, { fields: [tugas.authorId], references: [users.id] }),
+  soal: many(tugasSoal),
   submissions: many(tugasSubmissions),
+}));
+
+export const tugasSoalRelations = relations(tugasSoal, ({ one }) => ({
+  tugas: one(tugas, { fields: [tugasSoal.tugasId], references: [tugas.id] }),
 }));
 
 export const ujianRelations = relations(ujian, ({ one, many }) => ({
@@ -188,4 +231,3 @@ export const complaints = pgTable("complaints", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
-
