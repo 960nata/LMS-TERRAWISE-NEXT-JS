@@ -7,7 +7,6 @@ import {
   jsonb,
   pgEnum,
   uniqueIndex,
-  doublePrecision,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createId } from "@paralleldrive/cuid2";
@@ -176,32 +175,6 @@ export const ujianRelations = relations(ujian, ({ one, many }) => ({
 export const soalRelations = relations(soal, ({ one }) => ({
   ujian: one(ujian, { fields: [soal.ujianId], references: [ujian.id] }),
 }));
-
-export const iotDevices = pgTable("iot_devices", {
-  id: text("id").primaryKey().$defaultFn(() => createId()),
-  name: text("name").notNull(),
-  deviceCode: text("device_code").notNull().unique(),
-  status: text("status").notNull().default("ONLINE"),
-  location: text("location").notNull(),
-  kelasId: text("kelas_id").references(() => kelas.id),
-  lastSeen: timestamp("last_seen").notNull().defaultNow(),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-});
-
-export const iotSensorData = pgTable("iot_sensor_data", {
-  id: text("id").primaryKey().$defaultFn(() => createId()),
-  deviceId: text("device_id").references(() => iotDevices.id),
-  kelasId: text("kelas_id").references(() => kelas.id),
-  userId: text("user_id").references(() => users.id),
-  soilTemperature: doublePrecision("soil_temperature").notNull().default(26.5),
-  soilMoisture: doublePrecision("soil_moisture").notNull().default(65.0),
-  nitrogen: doublePrecision("nitrogen").notNull().default(45.0),
-  phosphorus: doublePrecision("phosphorus").notNull().default(30.0),
-  potassium: doublePrecision("potassium").notNull().default(80.0),
-  ph: doublePrecision("ph").notNull().default(6.8),
-  ec: doublePrecision("ec").notNull().default(1.5),
-  measuredAt: timestamp("measured_at").notNull().defaultNow(),
-});
 
 export const complaints = pgTable("complaints", {
   id: text("id").primaryKey().$defaultFn(() => createId()),

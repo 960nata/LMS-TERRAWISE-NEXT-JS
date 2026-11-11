@@ -15,33 +15,32 @@ export default function SecurityPage() {
       </header>
 
       <main className="mx-auto max-w-[800px] px-6 py-16">
-        <h1 className="text-3xl font-black uppercase tracking-tight md:text-5xl">Arsitektur Keamanan</h1>
+        <h1 className="text-3xl font-black uppercase tracking-tight md:text-5xl">Keamanan Sistem</h1>
         <p className="mt-2 text-xs font-bold uppercase tracking-widest text-gray-400">
-          Standar Enterprise &amp; Edge Protection
+          Standar Proteksi Data &amp; Integritas Penilaian
         </p>
 
         <div className="mt-10 space-y-8 text-sm leading-relaxed text-gray-700">
           <section>
-            <h2 className="text-lg font-bold text-black uppercase">1. Enkripsi End-to-End</h2>
+            <h2 className="text-lg font-bold text-black uppercase">1. Enkripsi Transmisi &amp; Kata Sandi</h2>
             <p className="mt-2">
-              Semua telemetri dari node ESP8266/ESP32 dikirimkan menggunakan kanal aman TLS/SSL terenkripsi AES-256 untuk
-              mencegah serangan man-in-the-middle dan pemalsuan data lingkungan.
+              Seluruh data yang dikirimkan antara browser pengguna dan server kami dienkripsi menggunakan protokol TLS 1.3 / HTTPS.
+              Kata sandi pengguna di-hash menggunakan algoritma Bcrypt dengan cost factor terstandar.
             </p>
           </section>
 
           <section>
             <h2 className="text-lg font-bold text-black uppercase">2. Role-Based Access Control (RBAC)</h2>
             <p className="mt-2">
-              Sistem membatasi otorisasi secara ketat berdasarkan hierarki 4 peran: Super Admin, Admin, Guru, dan Siswa.
-              Semua mutasi data divalidasi di level server actions dan middleware proxy.
+              Sistem menerapkan pemisahan hak akses yang ketat antara Super Admin, Administrator, Guru Pengajar, dan Siswa
+              pada tingkat middleware dan query database.
             </p>
           </section>
 
           <section>
-            <h2 className="text-lg font-bold text-black uppercase">3. Integritas Data &amp; Audit Log</h2>
+            <h2 className="text-lg font-bold text-black uppercase">3. Integritas Penilaian Akademik</h2>
             <p className="mt-2">
-              Setiap catatan telemetri sensor, pengumpulan tugas, dan hasil ujian dilengkapi timestamp yang tidak dapat diubah
-              untuk menjamin keaslian data penelitian.
+              Setiap rekaman pengumpulan tugas dan hasil ujian dilengkapi timestamp yang akurat untuk menjamin keaslian pengerjaan dan kejujuran akademik.
             </p>
           </section>
         </div>

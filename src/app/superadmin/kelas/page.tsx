@@ -68,7 +68,7 @@ export default async function ClassPage() {
                     id="description"
                     name="description"
                     maxLength={1000}
-                    placeholder="cth: Kelas riset sensor NPK dan monitoring lahan"
+                    placeholder="cth: Kelas Sains dan Teknologi Informasi"
                   />
                 </div>
                 <div>

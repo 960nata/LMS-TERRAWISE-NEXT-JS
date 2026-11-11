@@ -24,9 +24,9 @@ export default async function SuperadminDashboard() {
       <MenuCard href="/superadmin/pengguna" icon="groups" title="Manajemen Pengguna" description="Kelola akun pengguna sistem." />
       <MenuCard href="/superadmin/kelas" icon="meeting_room" title="Manajemen Kelas" description="Buat kelas dan atur keanggotaan siswa." />
       <MenuCard href="/superadmin/laporan" icon="analytics" title="Laporan" description="Lihat ringkasan pembelajaran dan unduh nilai tugas." />
-      <MenuCard href="/teacher/materi" icon="folder_open" title="Materi" description="Lihat dan kelola materi pembelajaran." />
-      <MenuCard href="/teacher/tugas" icon="assignment" title="Manajemen Tugas" description="Lihat dan kelola tugas pembelajaran." />
-      <MenuCard href="/teacher/ujian" icon="edit_document" title="Manajemen Ujian" description="Lihat dan kelola ujian." />
+      <MenuCard href="/superadmin/materi" icon="folder_open" title="Manajemen Materi" description="Lihat dan kelola materi pembelajaran." />
+      <MenuCard href="/superadmin/tugas" icon="assignment" title="Manajemen Tugas" description="Lihat dan kelola tugas pembelajaran." />
+      <MenuCard href="/superadmin/ujian" icon="quiz" title="Manajemen Ujian" description="Lihat dan kelola ujian sekolah." />
     </div>
   </>;
 }

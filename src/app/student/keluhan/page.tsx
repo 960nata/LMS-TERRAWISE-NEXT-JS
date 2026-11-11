@@ -25,13 +25,13 @@ export default async function StudentComplaintsPage() {
     <>
       <PageHeader
         title="Keluhan & Bantuan"
-        description="Sampaikan kendala teknis sistem, materi, atau perangkat sensor IoT ke administrator."
+        description="Sampaikan kendala teknis sistem, materi, atau pembelajaran ke administrator."
         action={
           <ActionModal
             triggerText="Buat Tiket Bantuan"
             triggerIcon="support_agent"
             title="Ajukan Tiket Bantuan & Keluhan"
-            description="Jelaskan kendala teknis, sensor, atau pembelajaran yang Anda hadapi secara spesifik."
+            description="Jelaskan kendala teknis, akun, tugas, atau pembelajaran yang Anda hadapi secara spesifik."
           >
             <form action={createComplaint} className="space-y-4">
               <div>
@@ -41,7 +41,7 @@ export default async function StudentComplaintsPage() {
                 <input
                   name="title"
                   required
-                  placeholder="cth: Nilai Sensor pH Tidak Terbaca"
+                  placeholder="cth: Kendala Mengunggah File Jawaban Tugas"
                   className="mt-1.5 h-11 w-full rounded-xl border border-gray-200 bg-white px-3.5 text-xs font-medium text-black outline-none focus:border-black"
                 />
               </div>
@@ -56,9 +56,9 @@ export default async function StudentComplaintsPage() {
                     className="mt-1.5 h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-xs font-medium text-black outline-none focus:border-black"
                   >
                     <option value="Sistem & Akun">Sistem &amp; Akun</option>
-                    <option value="IoT Hardware">Sensor &amp; Hardware IoT</option>
                     <option value="Tugas & Ujian">Tugas &amp; Ujian</option>
                     <option value="Materi Pembelajaran">Materi Pembelajaran</option>
+                    <option value="Akses & Fasilitas">Akses &amp; Fasilitas Belajar</option>
                     <option value="Lainnya">Lainnya</option>
                   </select>
                 </div>
@@ -86,7 +86,7 @@ export default async function StudentComplaintsPage() {
                   name="message"
                   required
                   rows={4}
-                  placeholder="Jelaskan detail kendala, lokasi sensor, atau halaman error..."
+                  placeholder="Jelaskan detail kendala atau pesan error yang dihadapi..."
                   className="mt-1.5 w-full rounded-xl border border-gray-200 bg-white p-3 text-xs font-medium text-black outline-none focus:border-black"
                 />
               </div>

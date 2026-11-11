@@ -16,6 +16,6 @@ export default async function Home() {
     redirect("/student");
   }
 
-  return <LoginPage initialOpen={false} />;
+  return <LoginPage />;
 }
 

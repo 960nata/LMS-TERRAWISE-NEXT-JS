@@ -68,7 +68,7 @@ export default async function MateriPage() {
               </div>
               <div>
                 <Label htmlFor="title">Judul Materi</Label>
-                <input id="title" name="title" placeholder="cth: Dasar Sensor NPK Tanah & Pertanian Modern" required className={inputClass} />
+                <input id="title" name="title" placeholder="cth: Pengantar Algoritma dan Pemrograman Modern" required className={inputClass} />
               </div>
               <div>
                 <Label htmlFor="content">Isi Materi</Label>

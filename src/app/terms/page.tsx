@@ -17,31 +17,31 @@ export default function TermsPage() {
       <main className="mx-auto max-w-[800px] px-6 py-16">
         <h1 className="text-3xl font-black uppercase tracking-tight md:text-5xl">Syarat &amp; Ketentuan</h1>
         <p className="mt-2 text-xs font-bold uppercase tracking-widest text-gray-400">
-          Terakhir Diperbarui: 11 November 2026
+          Aturan Penggunaan Platform LMS Terrawise
         </p>
 
         <div className="mt-10 space-y-8 text-sm leading-relaxed text-gray-700">
           <section>
-            <h2 className="text-lg font-bold text-black uppercase">1. Ketentuan Penggunaan</h2>
+            <h2 className="text-lg font-bold text-black uppercase">1. Penggunaan Akun</h2>
             <p className="mt-2">
-              Dengan mengakses dan menggunakan platform Terrawise.id, Anda menyetujui untuk terikat oleh syarat dan ketentuan
-              ini serta mematuhi seluruh peraturan yang berlaku.
+              Akun pengguna bersifat personal dan tidak boleh dialihkan kepada pihak lain. Setiap pengguna bertanggung jawab
+              penuh atas kerahasiaan kredensial akun masing-masing.
             </p>
           </section>
 
           <section>
-            <h2 className="text-lg font-bold text-black uppercase">2. Hak Akses Akun</h2>
+            <h2 className="text-lg font-bold text-black uppercase">2. Integritas Pengerjaan Tugas &amp; Ujian</h2>
             <p className="mt-2">
-              Setiap pengguna bertanggung jawab untuk menjaga kerahasiaan kredensial login akun mereka. Tindakan tidak sah atau
-              akses tanpa izin ke node sensor pihak lain sangat dilarang.
+              Jawaban tugas dan ujian wajib dikerjakan secara jujur dan mandiri. Segala bentuk kecurangan atau plagiarisme
+              merupakan pelanggaran terhadap tata tertib akademik.
             </p>
           </section>
 
           <section>
-            <h2 className="text-lg font-bold text-black uppercase">3. Integritas Riset &amp; Penilaian</h2>
+            <h2 className="text-lg font-bold text-black uppercase">3. Hak Cipta Materi</h2>
             <p className="mt-2">
-              Jawaban tugas, ujian, dan pengumpulan data sensor wajib dilakukan secara jujur dan transparan sesuai dengan
-              kode etik akademik dan protokol penelitian.
+              Seluruh modul pembelajaran, bank soal, dan materi yang diunggah oleh guru dilindungi oleh hak cipta dan hanya boleh
+              digunakan untuk keperluan pembelajaran di lingkungan sekolah.
             </p>
           </section>
         </div>

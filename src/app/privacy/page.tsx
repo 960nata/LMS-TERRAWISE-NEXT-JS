@@ -25,24 +25,22 @@ export default function PrivacyPage() {
             <h2 className="text-lg font-bold text-black uppercase">1. Informasi yang Kami Kumpulkan</h2>
             <p className="mt-2">
               Kami mengumpulkan informasi yang Anda berikan langsung kepada kami saat membuat akun, termasuk nama, alamat
-              email, peran (Super Admin, Admin, Guru, Siswa), dan data telemetri yang dikirimkan oleh node sensor IoT yang
-              terhubung ke platform kami.
+              email, peran (Super Admin, Admin, Guru, Siswa), dan catatan pengerjaan tugas serta ujian di platform kami.
             </p>
           </section>
 
           <section>
-            <h2 className="text-lg font-bold text-black uppercase">2. Penggunaan Data Sensor &amp; Pembelajaran</h2>
+            <h2 className="text-lg font-bold text-black uppercase">2. Penggunaan Data Pembelajaran</h2>
             <p className="mt-2">
-              Data telemetri (seperti suhu tanah, kelembaban, pH, EC, dan kandungan NPK) digunakan semata-mata untuk tujuan
-              analisis diagnostik, penelitian akademik siswa, dan pemantauan kondisi lingkungan secara real-time.
+              Data aktivitas akademik (seperti nilai tugas, hasil ujian, riwayat submission, dan progres materi) digunakan semata-mata untuk tujuan
+              analisis capaian belajar siswa, pelaporan akademik kelas, dan evaluasi hasil belajar oleh guru pengajar.
             </p>
           </section>
 
           <section>
             <h2 className="text-lg font-bold text-black uppercase">3. Keamanan Informasi</h2>
             <p className="mt-2">
-              Kami menerapkan standar keamanan enkripsi industri untuk melindungi transmisi data antara node sensor, gateway
-              ESP8266/ESP32, dan server cloud kami.
+              Kami menerapkan standar enkripsi industri untuk melindungi kredensial akun, transmisi data, dan kerahasiaan dokumen pembelajaran di server kami.
             </p>
           </section>
         </div>

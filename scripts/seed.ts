@@ -9,15 +9,13 @@ import {
   ujian,
   soal,
   ujianAttempts,
-  iotDevices,
-  iotSensorData,
   notifications,
   complaints,
 } from "../src/lib/db/schema";
 import bcrypt from "bcryptjs";
 
 async function main() {
-  console.log("🌱 Menjalankan Seeding Terrawise.id LMS & IoT...");
+  console.log("🌱 Menjalankan Seeding Terrawise.id LMS murni...");
 
   // 1. Bersihkan data lama
   await db.delete(ujianAttempts);
@@ -27,14 +25,12 @@ async function main() {
   await db.delete(tugas);
   await db.delete(materi);
   await db.delete(enrollments);
-  await db.delete(iotSensorData);
-  await db.delete(iotDevices);
   await db.delete(complaints);
   await db.delete(notifications);
   await db.delete(kelas);
   await db.delete(users);
 
-  // 2. Akun Pengguna (Sesuai Demo Credentials)
+  // 2. Akun Pengguna (Sesuai Demo Credentials Laravel Terrawise)
   const superadminPass = await bcrypt.hash("superadmin123", 10);
   const adminPass = await bcrypt.hash("admin123", 10);
   const guruPass = await bcrypt.hash("guru123", 10);
@@ -104,8 +100,8 @@ async function main() {
   const [kelasX] = await db
     .insert(kelas)
     .values({
-      name: "X IPA 1 - Pertanian Presisi & IoT",
-      description: "Mata pelajaran Sains Terapan & Penerapan Sensor IoT pada Agrikultur",
+      name: "X MIPA 1 - Sains & Komputasi Dasar",
+      description: "Pembelajaran sains terapan, logika algoritma, dan literasi digital",
       teacherId: guru.id,
     })
     .returning();
@@ -113,8 +109,8 @@ async function main() {
   const [kelasXI] = await db
     .insert(kelas)
     .values({
-      name: "XI IPA 2 - Edge Computing & Smart Systems",
-      description: "Pengembangan mikrokontroler ESP32/ESP8266 dan telemetri data nirkabel",
+      name: "XI MIPA 2 - Rekayasa Perangkat Lunak & Logika",
+      description: "Pengembangan pemikiran komputasi, algoritma pemrograman, dan basis data",
       teacherId: guru.id,
     })
     .returning();
@@ -122,13 +118,13 @@ async function main() {
   const [kelasXII] = await db
     .insert(kelas)
     .values({
-      name: "XII Agrikultur Modern - Diagnostik NPK & pH Tanah",
-      description: "Riset analisis unsur hara tanah makro dan otomatisasi nutrisi fertigasi",
+      name: "XII MIPA 3 - Bioteknologi & Ilmu Lingkungan",
+      description: "Kajian bioteknologi modern, dinamika ekosistem, dan sains lingkungan hidup",
       teacherId: guru2.id,
     })
     .returning();
 
-  // 4. Enrollments (Daftarkan semua siswa ke seluruh kelas agar tidak kosongan!)
+  // 4. Enrollments (Daftarkan siswa ke seluruh kelas agar tidak kosongan)
   await db.insert(enrollments).values([
     { studentId: siswa1.id, kelasId: kelasX.id },
     { studentId: siswa1.id, kelasId: kelasXI.id },
@@ -141,81 +137,81 @@ async function main() {
   // 5. Materi Pembelajaran (8 Materi Lengkap)
   await db.insert(materi).values([
     {
-      title: "Arsitektur Sensor NPK & Pengukuran Kesuburan Tanah",
+      title: "Pengantar Algoritma dan Struktur Data Dasar",
       content:
-        "Sensor NPK (Nitrogen, Fosfor, Kalium) menggunakan metode spektrometri atau konduktivitas optik tanah untuk mengukur kandungan unsur hara makro utama yang dibutuhkan tanaman secara real-time.",
-      fileUrl: "https://example.com/materi-npk-iot.pdf",
+        "Memahami konsep efisiensi algoritma, notasi Big-O, tipe data primitif, array, serta struktur linier seperti stack dan queue dalam pemecahan masalah komputasi.",
+      fileUrl: "https://example.com/modul-algoritma-dasar.pdf",
       kelasId: kelasX.id,
       authorId: guru.id,
     },
     {
-      title: "Telemetri ESP8266 & Protokol MQTT ke ThingsBoard",
+      title: "Metode Ilmiah dan Perancangan Eksperimen Sains",
       content:
-        "Modul ESP8266 NodeMCU mengirim data sensor setiap 5 detik melalui WiFi lokal menggunakan protokol MQTT yang ringan dan hemat daya ke server platform Terrawise.",
-      fileUrl: "https://example.com/esp8266-telemetry.pdf",
+        "Langkah-langkah sistematis penelitian: identifikasi variabel bebas, terikat, dan kontrol, serta teknik pengumpulan data terukur yang valid.",
+      fileUrl: "https://example.com/metode-ilmiah-sains.pdf",
       kelasId: kelasX.id,
       authorId: guru.id,
     },
     {
-      title: "Kalibrasi Sensor Kelembaban Kapasitif & pH Elektroda",
+      title: "Konsep Dasar Kimia Larutan dan Keseimbangan Asam-Basa",
       content:
-        "Panduan langkah demi langkah dalam melakukan kalibrasi sensor analog capacitive soil moisture dan elektroda pH probe menggunakan larutan buffer standar pH 4.01 dan pH 6.86.",
-      fileUrl: "https://example.com/kalibrasi-sensor.pdf",
+        "Teori Arrhenius, Bronsted-Lowry, dan Lewis tentang reaksi asam-basa, perhitungan derajat keasaman (pH/pOH), serta prinsip larutan penyangga (buffer).",
+      fileUrl: "https://example.com/asam-basa-larutan.pdf",
+      kelasId: kelasX.id,
+      authorId: guru.id,
+    },
+    {
+      title: "Sistem Basis Data Relasional dan Normalisasi Data",
+      content:
+        "Prinsip desain database relational: Entity Relationship Diagram (ERD), kunci primer (primary key), foreign key, dan tahapan normalisasi 1NF hingga 3NF.",
+      fileUrl: "https://example.com/database-normalisasi.pdf",
       kelasId: kelasXI.id,
       authorId: guru.id,
     },
     {
-      title: "Pengenalan Salinitas & Konduktivitas Elektrik (EC) Tanah",
+      title: "Pemrograman Berorientasi Objek (OOP) & Clean Code",
       content:
-        "Konduktivitas elektrik (EC) mencerminkan konsentrasi garam terlarut dalam larutan tanah. Nilai EC berlebih dapat merusak akar tanaman akibat tekanan osmotik balik.",
-      fileUrl: "https://example.com/ec-salinitas-tanah.pdf",
+        "Empat pilar OOP: Enkapsulasi, Abstraksi, Pewarisan (Inheritance), dan Polimorfisme, disertai best practice penulisan kode modular yang mudah diuji.",
+      fileUrl: "https://example.com/oop-clean-code.pdf",
+      kelasId: kelasXI.id,
+      authorId: guru.id,
+    },
+    {
+      title: "Bioteknologi Fermentasi & Rekayasa Pangan Tradisional",
+      content:
+        "Peran mikroorganisme (ragi Saccharomyces, bakteri Lactobacillus) dalam proses fermentasi pangan bernilai gizi tinggi dan teknik kontrol sterilisasi.",
+      fileUrl: "https://example.com/bioteknologi-fermentasi.pdf",
       kelasId: kelasXII.id,
       authorId: guru2.id,
     },
     {
-      title: "Sistem Fertigasi Otomatis dengan Solenoid Valve & Relay",
+      title: "Dinamika Ekosistem dan Siklus Biogeokimia Lingkungan",
       content:
-        "Otomatisasi pengairan pupuk cair (fertigasi) berbasis ambang batas kelembaban tanah dan EC tanah menggunakan aktuator solenoid valve bertegangan 12V DC.",
-      fileUrl: "https://example.com/fertigasi-otomatis.pdf",
+        "Aliran energi trofik pada jaring makanan, siklus nitrogen, fosfor, karbon, serta evaluasi dampak pencemaran terhadap daya dukung lingkungan hidup.",
+      fileUrl: "https://example.com/ekosistem-biogeokimia.pdf",
       kelasId: kelasXII.id,
       authorId: guru2.id,
     },
     {
-      title: "Pengolahan Citra Spektral NDVI Tanaman Menggunakan Drone",
+      title: "Etika Akademik dan Metodologi Penulisan Karya Ilmiah",
       content:
-        "Indeks Vegetasi Selisih Ternormalisasi (NDVI) menghitung rasio pantulan cahaya inframerah dekat (NIR) dan merah tampak untuk memetakan kesehatan kanopi klorofil.",
-      fileUrl: "https://example.com/ndvi-drone-mapping.pdf",
-      kelasId: kelasXI.id,
-      authorId: guru.id,
-    },
-    {
-      title: "Arsitektur Edge Computing & Offline-First Sensor Node",
-      content:
-        "Strategi penyimpanan lokal di mikrokontroler menggunakan SPI Flash / MicroSD saat koneksi WiFi putus, lalu sinkronisasi otomatis ketika jaringan pulih.",
-      fileUrl: "https://example.com/edge-computing-offline.pdf",
-      kelasId: kelasXI.id,
-      authorId: guru.id,
-    },
-    {
-      title: "Manajemen Kualitas Tanah untuk Pertanian Berkelanjutan",
-      content:
-        "Strategi remediasi tanah asam dan tanah basa menggunakan kapur pertanian (dolomit) atau bahan organik guna mempertahankan kestabilan pH mikroorganisme.",
-      fileUrl: "https://example.com/tanah-berkelanjutan.pdf",
-      kelasId: kelasX.id,
-      authorId: guru.id,
+        "Panduan sitasi baku (APA Style), teknik parafrase untuk menghindari plagiarisme, serta tata cara penyusunan abstrak dan bab kesimpulan laporan penelitian.",
+      fileUrl: "https://example.com/penulisan-karya-ilmiah.pdf",
+      kelasId: kelasXII.id,
+      authorId: guru2.id,
     },
   ]);
 
-  // 6. Tugas-Tugas Pembelajaran (6 Tugas Lengkap)
+  // 6. Tugas Pembelajaran (6 Tugas Lengkap)
   const now = Date.now();
   const day = 24 * 60 * 60 * 1000;
 
   const [tugas1] = await db
     .insert(tugas)
     .values({
-      title: "Laporan Analisis Kandungan NPK Lahan Greenhouse A",
+      title: "Laporan Praktikum Titrasi Asam Basa dan Perhitungan pH",
       description:
-        "Lakukan pengambilan sampel data telemetri dari perangkat sensor Terra-NPK-01 selama 24 jam. Hitung nilai rata-rata nitrogen dan berikan rekomendasi pemupukan.",
+        "Susun laporan praktikum titrasi larutan HCl menggunakan larutan standar NaOH 0.1 M. Cantumkan kurva titrasi, titik ekuivalen, dan perhitungan konsentrasi sampel.",
       dueDate: new Date(now + 7 * day),
       maxScore: 100,
       kelasId: kelasX.id,
@@ -226,9 +222,9 @@ async function main() {
   const [tugas2] = await db
     .insert(tugas)
     .values({
-      title: "Diagram Rangkaian Node Sensor Suhu & Kelembaban ESP8266",
+      title: "Implementasi Algoritma Sorting dan Searching Menggunakan TypeScript",
       description:
-        "Buat skema rangkaian mikrokontroler ESP8266 yang terhubung dengan sensor DHT22, probe kapasitif, dan solar panel mini pengisi daya baterai Li-Ion 18650.",
+        "Buat fungsi algoritma Quick Sort dan Binary Search. Sertakan analisis kompleksitas waktu (Big-O) dan pengujian dengan 10.000 data acak.",
       dueDate: new Date(now + 5 * day),
       maxScore: 100,
       kelasId: kelasXI.id,
@@ -239,38 +235,38 @@ async function main() {
   const [tugas3] = await db
     .insert(tugas)
     .values({
-      title: "Studi Komparasi Sensor EC Tanah Analog vs Digital RS485",
+      title: "Makalah Analisis Dampak Perubahan Iklim Terhadap Keanekaragaman Hayati",
       description:
-        "Bandingkan akurasi pembacaan sinyal tegangan analog dengan sensor standar industri RS485 Modbus RTU pada kondisi salinitas pupuk 1.2 mS/cm hingga 2.5 mS/cm.",
+        "Kaji literatur ilmiah mengenai korelasi peningkatan suhu global terhadap pola migrasi fauna lokal. Minimal 5 halaman dengan sitasi ilmiah valid.",
       dueDate: new Date(now + 6 * day),
-      maxScore: 100,
-      kelasId: kelasX.id,
-      authorId: guru.id,
-    })
-    .returning();
-
-  const [tugas4] = await db
-    .insert(tugas)
-    .values({
-      title: "Perancangan Jadwal Fertigasi Otomatis Berdasarkan pH Tanah",
-      description:
-        "Buat algoritma logika (flowchart atau pseudocode) yang mengatur kapan pompa nutrisi A dan nutrisi B harus menyala saat pH tanah berada di bawah ambang batas 5.8.",
-      dueDate: new Date(now + 9 * day),
       maxScore: 100,
       kelasId: kelasXII.id,
       authorId: guru2.id,
     })
     .returning();
 
+  const [tugas4] = await db
+    .insert(tugas)
+    .values({
+      title: "Desain ERD dan Skema Database Relasional Sistem Informasi Sekolah",
+      description:
+        "Rancang diagram relasi entitas untuk modul guru, kelas, siswa, tugas, dan nilai. Pastikan skema tabel telah memenuhi bentuk normal ketiga (3NF).",
+      dueDate: new Date(now + 9 * day),
+      maxScore: 100,
+      kelasId: kelasXI.id,
+      authorId: guru.id,
+    })
+    .returning();
+
   const [tugas5] = await db
     .insert(tugas)
     .values({
-      title: "Analisis Anomali Suhu Ruang Inkubator Bibit Tanaman",
+      title: "Studi Kasus Hukum Kekekalan Energi Mekanik pada Lintasan Miring",
       description:
-        "Unduh riwayat data sensor suhu dari stasiun cuaca edge TW-ENV-003, lalu identifikasi jam-jam terjadinya lonjakan panas di atas 34°C.",
+        "Hitung kecepatan teoritis benda meluncur tanpa gesekan dibandingkan hasil eksperimen fisik di laboratorium. Tuliskan analisis ralat persentase kesalahan.",
       dueDate: new Date(now + 12 * day),
       maxScore: 100,
-      kelasId: kelasXI.id,
+      kelasId: kelasX.id,
       authorId: guru.id,
     })
     .returning();
@@ -278,9 +274,9 @@ async function main() {
   const [tugas6] = await db
     .insert(tugas)
     .values({
-      title: "Laporan Akhir Praktikum Kalibrasi Probe Sensor 7-in-1",
+      title: "Proposal Penelitian Bioteknologi Fermentasi Pangan Lokal",
       description:
-        "Susun laporan praktikum lengkap berisi tabel regresi linier sebelum dan sesudah kalibrasi elektroda kaca serta perhitungan ralat pengukuran standar.",
+        "Rancang proposal ilmiah inovasi pangan fermentasi memanfaatkan bahan baku lokal. Tuliskan latar belakang, hipotesis, dan metodologi eksperimen terinci.",
       dueDate: new Date(now + 14 * day),
       maxScore: 100,
       kelasId: kelasXII.id,
@@ -294,32 +290,32 @@ async function main() {
     tugasId: tugas1.id,
     studentId: siswa1.id,
     answerText:
-      "Data sensor tercatat stabil pada rata-rata N: 45.2 mg/kg, P: 32.1 mg/kg, K: 84.7 mg/kg. Disarankan penambahan pupuk urea 15% pada fase vegetatif tanaman selada.",
-    fileUrl: "https://drive.google.com/sample/laporan-npk-ahmad.pdf",
+      "Titrasi dilakukan sebanyak 3 kali pengulangan (triplo). Rata-rata volume NaOH yang dibutuhkan untuk mencapai titik akhir fenolftalein adalah 18.4 mL. Konsentrasi HCl terhitung sebesar 0.092 M.",
+    fileUrl: "https://drive.google.com/sample/laporan-titrasi-ahmad.pdf",
     score: 92,
-    feedback: "Analisis data telemetri sangat komprehensif dan interpretasi agronomisnya tepat sasaran!",
+    feedback: "Metodologi eksperimen sangat rapi dan perhitungan stoikiometri akurat!",
     submittedAt: new Date(now - 1 * day),
     gradedAt: new Date(now - 12 * 60 * 60 * 1000),
   });
 
-  // Siswa 2 mengumpulkan tugas 2 (Belum dinilai, siap untuk dinilai oleh Guru/Admin!)
+  // Siswa 2 mengumpulkan tugas 2 (Belum dinilai, siap dinilai Guru/Admin)
   await db.insert(tugasSubmissions).values({
     tugasId: tugas2.id,
     studentId: siswa2.id,
     answerText:
-      "Skema rangkaian dirancang menggunakan Fritzing. Pin data DHT22 terhubung ke GPIO4 (D2) dengan resistor pull-up 4.7k ohm, sensor soil moisture kapasitif ke pin ADC A0 melalui voltage divider 3.3V.",
-    fileUrl: "https://github.com/example/esp8266-soil-schematic",
+      "Kode program telah diuji menggunakan Node.js. Algoritma Quick Sort menunjukkan rata-rata eksekusi 4.2ms untuk 10.000 elemen, sedangkan Binary Search mampu menemukan data dalam 14 iterasi maksimal.",
+    fileUrl: "https://github.com/example/ts-algorithms-sorting",
     score: null,
     feedback: null,
-    submittedAt: new Date(now - 4 * 60 * 60 * 1000),
+    submittedAt: new Date(now - 3 * 60 * 60 * 1000),
   });
 
   // 8. Ujian-Ujian (4 Ujian Lengkap dengan Soal Pilihan Ganda)
-  // Ujian 1: UTS IoT Tanah (Ahmad Rizki sudah selesai nilai 100, Siti Nurhaliza belum)
+  // Ujian 1: UTS Sains Terapan (Ahmad Rizki sudah selesai nilai 100, Siti Nurhaliza belum)
   const [exam1] = await db
     .insert(ujian)
     .values({
-      title: "Ujian Tengah Semester - IoT & Diagnostik Tanah",
+      title: "Ujian Tengah Semester - Sains Terapan & Logika",
       startTime: new Date(now - 2 * 60 * 60 * 1000),
       endTime: new Date(now + 14 * day),
       durationMinutes: 60,
@@ -331,38 +327,33 @@ async function main() {
   await db.insert(soal).values([
     {
       ujianId: exam1.id,
-      question: "Unsur hara makro utama tanah yang disingkat dalam NPK adalah...",
-      options: [
-        "Natrium, Fosfor, Kalsium",
-        "Nitrogen, Fosfor, Kalium",
-        "Nitrogen, Fluorin, Karbon",
-        "Nikel, Platinum, Kobalt",
-      ],
-      correctAnswer: "Nitrogen, Fosfor, Kalium",
+      question: "Variabel dalam eksperimen sains yang sengaja diubah-ubah oleh peneliti untuk menguji hipotesis disebut...",
+      options: ["Variabel bebas (independen)", "Variabel terikat (dependen)", "Variabel kontrol", "Variabel pengganggu"],
+      correctAnswer: "Variabel bebas (independen)",
       points: 25,
       order: 1,
     },
     {
       ujianId: exam1.id,
-      question: "Rentang pH tanah ideal untuk sebagian besar tanaman hortikultura adalah...",
-      options: ["3.0 - 4.5", "6.0 - 7.0", "8.5 - 10.0", "12.0 - 14.0"],
-      correctAnswer: "6.0 - 7.0",
+      question: "Rentang nilai pH untuk larutan yang bersifat asam kuat adalah...",
+      options: ["pH 1 - 3", "pH 6 - 8", "pH 9 - 11", "pH 12 - 14"],
+      correctAnswer: "pH 1 - 3",
       points: 25,
       order: 2,
     },
     {
       ujianId: exam1.id,
-      question: "Protokol transmisi data IoT yang paling hemat bandwidth dan daya untuk mikrokontroler adalah...",
-      options: ["HTTP/1.1", "FTP", "MQTT", "Telnet"],
-      correctAnswer: "MQTT",
+      question: "Kompleksitas waktu rata-rata (average time complexity) dari algoritma Binary Search adalah...",
+      options: ["O(log n)", "O(n)", "O(n log n)", "O(n²)"],
+      correctAnswer: "O(log n)",
       points: 25,
       order: 3,
     },
     {
       ujianId: exam1.id,
-      question: "Satuan standar pengukuran Electrical Conductivity (EC) tanah adalah...",
-      options: ["µS/cm (microSiemens per cm)", "Watt per meter", "Lux", "Joule"],
-      correctAnswer: "µS/cm (microSiemens per cm)",
+      question: "Satuan standar Sistem Internasional (SI) untuk besaran gaya adalah...",
+      options: ["Newton (N)", "Joule (J)", "Watt (W)", "Pascal (Pa)"],
+      correctAnswer: "Newton (N)",
       points: 25,
       order: 4,
     },
@@ -373,85 +364,24 @@ async function main() {
     ujianId: exam1.id,
     studentId: siswa1.id,
     answers: {
-      "1": "Nitrogen, Fosfor, Kalium",
-      "2": "6.0 - 7.0",
-      "3": "MQTT",
-      "4": "µS/cm (microSiemens per cm)",
+      "1": "Variabel bebas (independen)",
+      "2": "pH 1 - 3",
+      "3": "O(log n)",
+      "4": "Newton (N)",
     },
     score: 100,
     startedAt: new Date(now - 1 * day),
-    submittedAt: new Date(now - 1 * day + 35 * 60 * 1000),
+    submittedAt: new Date(now - 1 * day + 32 * 60 * 1000),
   });
 
-  // Ujian 2: Kuis Harian 01 (SEDANG AKTIF / LIVE! Belum dikerjakan oleh siapapun, siap dikerjakan!)
+  // Ujian 2: Kuis Harian 01 (SEDANG AKTIF / LIVE! Belum dikerjakan, siap dikerjakan siswa!)
   const [exam2] = await db
     .insert(ujian)
     .values({
-      title: "Kuis Harian 01 - Pengenalan Sensor NPK dan pH Elektroda",
+      title: "Kuis Harian 01 - Struktur Data dan Algoritma Dasar",
       startTime: new Date(now - 1 * 60 * 60 * 1000),
       endTime: new Date(now + 10 * day),
       durationMinutes: 45,
-      kelasId: kelasX.id,
-      authorId: guru.id,
-    })
-    .returning();
-
-  await db.insert(soal).values([
-    {
-      ujianId: exam2.id,
-      question: "Unsur kimia tanah yang berfungsi utama mempercepat pertumbuhan vegetatif daun dan batang tanaman adalah...",
-      options: ["Nitrogen (N)", "Kalium (K)", "Kalsium (Ca)", "Belerang (S)"],
-      correctAnswer: "Nitrogen (N)",
-      points: 20,
-      order: 1,
-    },
-    {
-      ujianId: exam2.id,
-      question: "Prinsip kerja elektroda kaca pada sensor probe pH didasarkan pada pengukuran...",
-      options: [
-        "Potensiometrik perbedaan potensial ion H+ membran",
-        "Resonansi frekuensi gelombang ultrasonik",
-        "Penyerapan spektrum inframerah dekat",
-        "Resistansi konduktivitas arus bolak-balik",
-      ],
-      correctAnswer: "Potensiometrik perbedaan potensial ion H+ membran",
-      points: 20,
-      order: 2,
-    },
-    {
-      ujianId: exam2.id,
-      question: "Larutan buffer standar yang lazim digunakan untuk kalibrasi titik asam probe sensor pH adalah...",
-      options: ["Buffer pH 4.01", "Buffer pH 9.18", "Air suling murni pH 5.00", "Larutan NaCl 10%"],
-      correctAnswer: "Buffer pH 4.01",
-      points: 20,
-      order: 3,
-    },
-    {
-      ujianId: exam2.id,
-      question: "Gejala menguning pada tepi daun tua tanaman (daun terbakar) umumnya mengindikasikan defisiensi hara...",
-      options: ["Kalium (K)", "Nitrogen (N)", "Boron (B)", "Magnesium (Mg)"],
-      correctAnswer: "Kalium (K)",
-      points: 20,
-      order: 4,
-    },
-    {
-      ujianId: exam2.id,
-      question: "Sensor probe tanah 7-in-1 industri umumnya berkomunikasi dengan mikrokontroler menggunakan protokol fisik...",
-      options: ["RS485 Modbus RTU", "I2C 100kHz", "Serial SPI 10MHz", "Bluetooth Low Energy"],
-      correctAnswer: "RS485 Modbus RTU",
-      points: 20,
-      order: 5,
-    },
-  ]);
-
-  // Ujian 3: Simulasi Ujian Akhir Edge Computing (SEDANG AKTIF / LIVE! Belum dikerjakan!)
-  const [exam3] = await db
-    .insert(ujian)
-    .values({
-      title: "Simulasi Ujian Akhir - Arsitektur Edge Computing & MQTT",
-      startTime: new Date(now - 30 * 60 * 1000),
-      endTime: new Date(now + 12 * day),
-      durationMinutes: 50,
       kelasId: kelasXI.id,
       authorId: guru.id,
     })
@@ -459,63 +389,124 @@ async function main() {
 
   await db.insert(soal).values([
     {
-      ujianId: exam3.id,
-      question: "Struktur topik pesan (topic) pada broker MQTT dirancang menggunakan pemisah karakter...",
-      options: ["Garis miring (/) cth: sensor/greenhouse/suhu", "Titik dua (:) cth: sensor:greenhouse", "Koma (,) cth: sensor,data", "Titik (.) cth: sensor.data"],
-      correctAnswer: "Garis miring (/) cth: sensor/greenhouse/suhu",
+      ujianId: exam2.id,
+      question: "Prinsip operasi struktur data Stack (Tumpukan) adalah...",
+      options: ["LIFO (Last In First Out)", "FIFO (First In First Out)", "LILO (Last In Last Out)", "Random Access"],
+      correctAnswer: "LIFO (Last In First Out)",
       points: 20,
       order: 1,
     },
     {
-      ujianId: exam3.id,
-      question: "Keuntungan utama pemrosesan Edge Computing di dekat probe sensor mikrokontroler adalah...",
-      options: [
-        "Memfilter data anomali dan tetap berjalan saat internet down",
-        "Menghilangkan kebutuhan baterai perangkat",
-        "Meningkatkan resolusi kamera ponsel",
-        "Mempercepat pertumbuhan mikroba tanah",
-      ],
-      correctAnswer: "Memfilter data anomali dan tetap berjalan saat internet down",
+      ujianId: exam2.id,
+      question: "Struktur data yang beroperasi dengan prinsip antrean First In First Out (FIFO) adalah...",
+      options: ["Queue", "Stack", "Binary Tree", "Heap"],
+      correctAnswer: "Queue",
       points: 20,
       order: 2,
     },
     {
-      ujianId: exam3.id,
-      question: "Port standar default yang digunakan broker MQTT tanpa enkripsi SSL adalah...",
-      options: ["1883", "80", "443", "8080"],
-      correctAnswer: "1883",
+      ujianId: exam2.id,
+      question: "Keuntungan utama menggunakan Linked List dibandingkan Array statis adalah...",
+      options: [
+        "Ukuran memori dinamis dan fleksibel saat penambahan elemen",
+        "Akses elemen acak (random access) sangat cepat O(1)",
+        "Menggunakan memori lebih sedikit tanpa pointer",
+        "Elemen selalu tersimpan berurutan dalam memori fisik",
+      ],
+      correctAnswer: "Ukuran memori dinamis dan fleksibel saat penambahan elemen",
       points: 20,
       order: 3,
     },
     {
-      ujianId: exam3.id,
-      question: "Komponen mikrokontroler yang berfungsi menerjemahkan sinyal tegangan analog sensor ke angka digital adalah...",
-      options: ["ADC (Analog-to-Digital Converter)", "PWM (Pulse Width Modulation)", "DAC (Digital-to-Analog)", "RTC (Real Time Clock)"],
-      correctAnswer: "ADC (Analog-to-Digital Converter)",
+      ujianId: exam2.id,
+      question: "Algoritma pencarian yang mengharuskan kumpulan data sudah terurut (sorted) terlebih dahulu adalah...",
+      options: ["Binary Search", "Linear Search", "Breadth First Search", "Depth First Search"],
+      correctAnswer: "Binary Search",
       points: 20,
       order: 4,
     },
     {
-      ujianId: exam3.id,
-      question: "Tingkat QoS 1 pada protokol MQTT menjamin bahwa pesan yang dikirimkan...",
-      options: [
-        "Terkirim setidaknya satu kali (At least once)",
-        "Terkirim maksimal satu kali (At most once)",
-        "Terkirim tepat satu kali tanpa duplikasi (Exactly once)",
-        "Tidak dijamin sampai sama sekali",
-      ],
-      correctAnswer: "Terkirim setidaknya satu kali (At least once)",
+      ujianId: exam2.id,
+      question: "Teknik optimasi algoritma yang menyimpan hasil sub-masalah agar tidak dihitung ulang disebut...",
+      options: ["Memoization / Dynamic Programming", "Brute Force", "Greedy Algorithm", "Backtracking"],
+      correctAnswer: "Memoization / Dynamic Programming",
       points: 20,
       order: 5,
     },
   ]);
 
-  // Ujian 4: Kuis Praktikum Kalibrasi & Salinitas (SEDANG AKTIF / LIVE! Belum dikerjakan!)
+  // Ujian 3: Simulasi Ujian Akhir (SEDANG AKTIF / LIVE! Belum dikerjakan!)
+  const [exam3] = await db
+    .insert(ujian)
+    .values({
+      title: "Simulasi Ujian Akhir - Keseimbangan Kimia & Termodinamika",
+      startTime: new Date(now - 30 * 60 * 1000),
+      endTime: new Date(now + 12 * day),
+      durationMinutes: 50,
+      kelasId: kelasX.id,
+      authorId: guru.id,
+    })
+    .returning();
+
+  await db.insert(soal).values([
+    {
+      ujianId: exam3.id,
+      question: "Menurut Asas Le Chatelier, jika tekanan pada sistem kesetimbangan gas diperbesar, maka kesetimbangan akan bergeser ke arah...",
+      options: [
+        "Jumlah koefisien gas yang lebih kecil",
+        "Jumlah koefisien gas yang lebih besar",
+        "Reaksi endoterm",
+        "Tidak mengalami pergeseran sama sekali",
+      ],
+      correctAnswer: "Jumlah koefisien gas yang lebih kecil",
+      points: 20,
+      order: 1,
+    },
+    {
+      ujianId: exam3.id,
+      question: "Hukum Termodinamika Pertama pada dasarnya menyatakan prinsip...",
+      options: [
+        "Hukum Kekekalan Energi",
+        "Peningkatan Entropi Semesta",
+        "Ketiadaan Nol Mutlak",
+        "Percepatan Gravitasi Universal",
+      ],
+      correctAnswer: "Hukum Kekekalan Energi",
+      points: 20,
+      order: 2,
+    },
+    {
+      ujianId: exam3.id,
+      question: "Reaksi kimia yang menyerap kalor dari lingkungan ke dalam sistem sehingga suhu lingkungan turun disebut...",
+      options: ["Reaksi endoterm", "Reaksi eksoterm", "Reaksi redoks", "Reaksi pembakaran"],
+      correctAnswer: "Reaksi endoterm",
+      points: 20,
+      order: 3,
+    },
+    {
+      ujianId: exam3.id,
+      question: "Zat yang berfungsi mempercepat laju reaksi kimia tanpa ikut terkonsumsi secara permanen adalah...",
+      options: ["Katalisator", "Inhibitor", "Reaktan pembatas", "Indikator universal"],
+      correctAnswer: "Katalisator",
+      points: 20,
+      order: 4,
+    },
+    {
+      ujianId: exam3.id,
+      question: "Nilai tetapan kesetimbangan (Kc) hanya dipengaruhi secara langsung oleh perubahan...",
+      options: ["Suhu sistem", "Konsentrasi reaktan", "Tekanan total", "Volume wadah"],
+      correctAnswer: "Suhu sistem",
+      points: 20,
+      order: 5,
+    },
+  ]);
+
+  // Ujian 4: Kuis Praktikum (SEDANG AKTIF / LIVE! Belum dikerjakan!)
   const [exam4] = await db
     .insert(ujian)
     .values({
-      title: "Kuis Praktikum - Kalibrasi Sensor Analog & Salinitas EC",
-      startTime: new Date(now - 10 * 60 * 1000),
+      title: "Kuis Praktikum - Genetika & Hereditas Mendel",
+      startTime: new Date(now - 15 * 60 * 1000),
       endTime: new Date(now + 8 * day),
       durationMinutes: 30,
       kelasId: kelasXII.id,
@@ -526,191 +517,89 @@ async function main() {
   await db.insert(soal).values([
     {
       ujianId: exam4.id,
-      question: "Satuan 1 mS/cm (milliSiemens per cm) pada pengukuran EC tanah setara dengan...",
-      options: ["1000 µS/cm", "100 µS/cm", "10 µS/cm", "10000 µS/cm"],
-      correctAnswer: "1000 µS/cm",
+      question: "Rasio fenotip persilangan monohibrid dominan penuh pada generasi F2 menurut Hukum Mendel I adalah...",
+      options: ["3 : 1", "1 : 2 : 1", "9 : 3 : 3 : 1", "1 : 1"],
+      correctAnswer: "3 : 1",
       points: 25,
       order: 1,
     },
     {
       ujianId: exam4.id,
-      question: "Mengapa sensor kelembaban kapasitif lebih tahan lama dibandingkan sensor tipe resistif kuningan?",
-      options: [
-        "Jalur tembaga dilapisi bahan isolasi sehingga mencegah korosi elektrolisis",
-        "Membutuhkan tegangan tinggi 220V",
-        "Menghasilkan gelombang radio khusus",
-        "Tidak memerlukan sambungan ground",
-      ],
-      correctAnswer: "Jalur tembaga dilapisi bahan isolasi sehingga mencegah korosi elektrolisis",
+      question: "Basa nitrogen penyusun molekul DNA yang berpasangan dengan Adenin melalui dua ikatan hidrogen adalah...",
+      options: ["Timin", "Guanin", "Sitosin", "Urasil"],
+      correctAnswer: "Timin",
       points: 25,
       order: 2,
     },
     {
       ujianId: exam4.id,
-      question: "Tingginya nilai EC pada media tanam mengindikasikan tingginya konsentrasi...",
-      options: [
-        "Garam dan ion pupuk terlarut dalam larutan tanah",
-        "Oksigen terlarut dalam rongga pori tanah",
-        "Keasaman gas karbon monoksida",
-        "Partikel pasir kuarsa tanah",
-      ],
-      correctAnswer: "Garam dan ion pupuk terlarut dalam larutan tanah",
+      question: "Peristiwa perubahan struktur atau urutan nukleotida pada materi genetik suatu organisme disebut...",
+      options: ["Mutasi", "Transkripsi", "Translasi", "Replikasi"],
+      correctAnswer: "Mutasi",
       points: 25,
       order: 3,
     },
     {
       ujianId: exam4.id,
-      question: "Tindakan agronomis cepat saat sensor mendeteksi pH tanah turun di bawah 5.0 (terlalu asam) adalah pemberian...",
-      options: ["Kapur pertanian (Dolomit / CaCO3)", "Belerang murni (Sulfur)", "Pupuk Ammonium Sulfat berlebih", "Air asin berkadar garam tinggi"],
-      correctAnswer: "Kapur pertanian (Dolomit / CaCO3)",
+      question: "Enzim yang berfungsi memotong pita DNA pada sekuens spesifik dalam teknologi rekayasa genetika adalah...",
+      options: ["Enzim Endonuklease Restriksi", "Enzim DNA Ligase", "Enzim Amilase", "Enzim Polimerase"],
+      correctAnswer: "Enzim Endonuklease Restriksi",
       points: 25,
       order: 4,
     },
   ]);
 
-  // 9. Perangkat IoT
-  const [device1] = await db
-    .insert(iotDevices)
-    .values({
-      name: "Terra-NPK-01 (Sensor 7-in-1 Tanah)",
-      deviceCode: "TW-NPK-001",
-      status: "ONLINE",
-      location: "Greenhouse Pertanian Presisi A",
-      kelasId: kelasX.id,
-    })
-    .returning();
-
-  const [device2] = await db
-    .insert(iotDevices)
-    .values({
-      name: "Terra-Soil-02 (Node Kelembaban & pH)",
-      deviceCode: "TW-SOIL-002",
-      status: "ONLINE",
-      location: "Lahan Percobaan Terbuka B",
-      kelasId: kelasX.id,
-    })
-    .returning();
-
-  const [device3] = await db
-    .insert(iotDevices)
-    .values({
-      name: "Terra-Climate-03 (Stasiun Cuaca Edge)",
-      deviceCode: "TW-ENV-003",
-      status: "ONLINE",
-      location: "Rooftop Laboratorium Smart Farming",
-      kelasId: kelasXI.id,
-    })
-    .returning();
-
-  // 10. Data Telemetri Realtime
-  const telemetryHistory = [
-    {
-      deviceId: device1.id,
-      kelasId: kelasX.id,
-      userId: siswa1.id,
-      soilTemperature: 27.4,
-      soilMoisture: 68.5,
-      nitrogen: 45.2,
-      phosphorus: 32.1,
-      potassium: 84.7,
-      ph: 6.8,
-      ec: 1.45,
-      measuredAt: new Date(now - 5 * 60 * 1000),
-    },
-    {
-      deviceId: device1.id,
-      kelasId: kelasX.id,
-      userId: siswa1.id,
-      soilTemperature: 27.6,
-      soilMoisture: 67.8,
-      nitrogen: 46.0,
-      phosphorus: 31.9,
-      potassium: 85.1,
-      ph: 6.75,
-      ec: 1.46,
-      measuredAt: new Date(now - 15 * 60 * 1000),
-    },
-    {
-      deviceId: device2.id,
-      kelasId: kelasX.id,
-      userId: siswa2.id,
-      soilTemperature: 28.2,
-      soilMoisture: 62.3,
-      nitrogen: 38.5,
-      phosphorus: 28.4,
-      potassium: 76.2,
-      ph: 6.5,
-      ec: 1.32,
-      measuredAt: new Date(now - 30 * 60 * 1000),
-    },
-    {
-      deviceId: device3.id,
-      kelasId: kelasXI.id,
-      userId: guru.id,
-      soilTemperature: 29.1,
-      soilMoisture: 58.9,
-      nitrogen: 41.0,
-      phosphorus: 29.5,
-      potassium: 79.8,
-      ph: 6.9,
-      ec: 1.38,
-      measuredAt: new Date(now - 45 * 60 * 1000),
-    },
-  ];
-
-  await db.insert(iotSensorData).values(telemetryHistory);
-
-  // 11. Notifikasi Sistem
+  // 9. Notifikasi Sistem
   await db.insert(notifications).values([
     {
       userId: siswa1.id,
       title: "Kuis Harian 01 Tersedia",
-      message: "Dr. Budi Santoso telah mengaktifkan Kuis Harian 01 untuk kelas X IPA 1. Silakan kerjakan sebelum tenggat.",
+      message: "Dr. Budi Santoso telah menerbitkan Kuis Harian 01 untuk kelas XI MIPA 2. Silakan kerjakan sebelum tenggat.",
       isRead: false,
     },
     {
       userId: siswa1.id,
       title: "Nilai Tugas Diperbarui",
-      message: "Tugas Laporan Analisis NPK Anda telah dinilai dengan skor 92/100.",
+      message: "Tugas Laporan Praktikum Titrasi Anda telah dinilai dengan skor 92/100.",
       isRead: false,
     },
     {
       userId: siswa2.id,
       title: "Simulasi Ujian Akhir Siap Dikerjakan",
-      message: "Simulasi Ujian Akhir Edge Computing & MQTT telah dibuka di kelas XI IPA 2.",
+      message: "Simulasi Ujian Akhir Keseimbangan Kimia telah dibuka di kelas X MIPA 1.",
       isRead: false,
     },
     {
       userId: guru.id,
       title: "Pengumpulan Tugas Baru Masuk",
-      message: "Siti Nurhaliza telah mengumpulkan tugas Diagram Rangkaian ESP8266.",
+      message: "Siti Nurhaliza telah mengumpulkan tugas Implementasi Algoritma Sorting.",
       isRead: false,
     },
     {
       userId: admin.id,
       title: "Sistem Terrawise Beroperasi Normal",
-      message: "3 Node IoT aktif mengirimkan telemetri ke database secara stabil.",
+      message: "Seluruh modul pembelajaran, tugas, dan ujian aktif terhubung ke database.",
       isRead: true,
     },
   ]);
 
-  // 12. Tiket Keluhan
+  // 10. Tiket Keluhan & Bantuan
   await db.insert(complaints).values([
     {
       userId: siswa1.id,
-      title: "Sensor TW-SOIL-002 Fluktuasi Nilai pH",
+      title: "Kendala Mengunggah Lampiran Tugas Format PDF",
       message:
-        "Pada pengujian siang hari pukul 12.00, nilai pH di probe 2 melonjak dari 6.5 ke 8.1. Mohon dibantu pengecekan kalibrasi elektroda.",
-      category: "IoT Hardware",
+        "Saat mencoba mengunggah dokumen PDF ukuran 3 MB, proses upload memakan waktu lebih dari 2 menit. Mohon informasi batasan ukuran file.",
+      category: "Tugas & Ujian",
       priority: "MEDIUM",
       status: "IN_PROGRESS",
       reply:
-        "Tim teknis laboratorium telah menjadwalkan kalibrasi ulang probe sensor pada hari Rabu.",
+        "Batas ukuran upload file telah dioptimalkan hingga 10 MB per dokumen. Silakan coba kembali mengunggah berkas Anda.",
     },
   ]);
 
-  console.log("✅ Seeding Terrawise.id berhasil!");
-  console.log("\n--- AKUN DEMO TERRAWISE.ID ---");
+  console.log("✅ Seeding Terrawise.id LMS murni (Bebas IoT) berhasil!");
+  console.log("\n--- AKUN DEMO TERRAWISE.ID (PERSIS DENGAN LARAVEL) ---");
   console.log("👑 Super Admin : superadmin@terrawise.id | password: superadmin123");
   console.log("⚙️ Admin       : admin@terrawise.id      | password: admin123");
   console.log("👨‍🏫 Guru        : guru@terrawise.id       | password: guru123");

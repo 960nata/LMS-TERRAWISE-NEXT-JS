@@ -56,7 +56,7 @@ export default async function SuperadminNotificationPage() {
                 <input
                   name="title"
                   required
-                  placeholder="cth: Pengumuman Pemeliharaan Server IoT"
+                  placeholder="cth: Pengumuman Jadwal Ujian Tengah Semester"
                   className="mt-1.5 h-11 w-full rounded-xl border border-gray-200 bg-white px-3.5 text-xs font-medium text-black outline-none focus:border-black"
                 />
               </div>

@@ -56,7 +56,7 @@ export default async function StudentReportPage() {
     <>
       <PageHeader
         title="Laporan Nilai & Hasil Belajar"
-        description="Rekapitulasi nilai tugas mandiri, kelompok, dan hasil pengerjaan ujian berbasis IoT."
+        description="Rekapitulasi nilai tugas mandiri, kelompok, dan hasil pengerjaan ujian sekolah."
       />
 
       <StatGrid>

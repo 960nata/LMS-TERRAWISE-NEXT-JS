@@ -51,8 +51,7 @@ export default async function StudentDashboard() {
   return (
     <>
       <WelcomeHeader title={`Selamat datang, ${name}!`}>
-        Siswa — Akses pembelajaran dan penelitian IoT di <span className="font-bold text-black">terrawise.id</span>. Anda dapat
-        mengakses materi pembelajaran, mengerjakan tugas, dan melakukan penelitian IoT.
+        Siswa — Akses portal pembelajaran terpadu di <span className="font-bold text-black">terrawise.id</span>. Akses materi pelajaran, kerjakan tugas, dan ikuti ujian terjadwal dengan mudah.
       </WelcomeHeader>
 
       <div className="mb-6 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-gray-100 bg-gray-100 lg:mb-12 lg:grid-cols-3 lg:rounded-3xl">

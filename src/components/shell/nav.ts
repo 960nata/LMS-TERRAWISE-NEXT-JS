@@ -35,7 +35,7 @@ export const SIDEBAR: Record<Role, NavSection[]> = {
       ],
     },
     {
-      title: "Akademik & LMS",
+      title: "Akademik & Pembelajaran",
       items: [
         { href: "/superadmin/materi", label: "Manajemen Materi", icon: "description" },
         { href: "/superadmin/tugas", label: "Manajemen Tugas", icon: "assignment" },
@@ -43,16 +43,12 @@ export const SIDEBAR: Record<Role, NavSection[]> = {
       ],
     },
     {
-      title: "Manajemen",
+      title: "Manajemen Sekolah",
       items: [
         { href: "/superadmin/pengguna", label: "Manajemen Pengguna", icon: "groups" },
         { href: "/superadmin/kelas", label: "Manajemen Kelas", icon: "meeting_room" },
-        { href: "/superadmin/keluhan", label: "Keluhan", icon: "chat_bubble" },
+        { href: "/superadmin/keluhan", label: "Keluhan & Bantuan", icon: "chat_bubble" },
       ],
-    },
-    {
-      title: "IoT & Penelitian",
-      items: [{ href: "/superadmin/iot", label: "Manajemen IoT", icon: "sensors" }],
     },
     {
       title: "Analitik",
@@ -68,7 +64,7 @@ export const SIDEBAR: Record<Role, NavSection[]> = {
       ],
     },
     {
-      title: "Akademik & LMS",
+      title: "Akademik & Pembelajaran",
       items: [
         { href: "/admin/materi", label: "Manajemen Materi", icon: "description" },
         { href: "/admin/tugas", label: "Manajemen Tugas", icon: "assignment" },
@@ -76,16 +72,12 @@ export const SIDEBAR: Record<Role, NavSection[]> = {
       ],
     },
     {
-      title: "Manajemen",
+      title: "Manajemen Sekolah",
       items: [
         { href: "/admin/pengguna", label: "Manajemen Pengguna", icon: "groups" },
         { href: "/admin/kelas", label: "Manajemen Kelas", icon: "meeting_room" },
-        { href: "/admin/keluhan", label: "Keluhan", icon: "chat_bubble" },
+        { href: "/admin/keluhan", label: "Keluhan & Bantuan", icon: "chat_bubble" },
       ],
-    },
-    {
-      title: "IoT & Penelitian",
-      items: [{ href: "/admin/iot", label: "Monitoring IoT", icon: "sensors" }],
     },
     {
       title: "Analitik",
@@ -101,7 +93,7 @@ export const SIDEBAR: Record<Role, NavSection[]> = {
       ],
     },
     {
-      title: "Manajemen",
+      title: "Manajemen Pembelajaran",
       items: [
         { href: "/teacher/materi", label: "Manajemen Materi", icon: "description" },
         { href: "/teacher/tugas", label: "Manajemen Tugas", icon: "assignment" },
@@ -110,12 +102,8 @@ export const SIDEBAR: Record<Role, NavSection[]> = {
       ],
     },
     {
-      title: "IoT & Penelitian",
-      items: [{ href: "/teacher/iot", label: "Penelitian IoT", icon: "sensors" }],
-    },
-    {
-      title: "Laporan",
-      items: [{ href: "/teacher/laporan", label: "Laporan Nilai", icon: "analytics" }],
+      title: "Laporan & Evaluasi",
+      items: [{ href: "/teacher/laporan", label: "Laporan Nilai Siswa", icon: "analytics" }],
     },
   ],
   STUDENT: [
@@ -129,19 +117,15 @@ export const SIDEBAR: Record<Role, NavSection[]> = {
     {
       title: "Pembelajaran",
       items: [
-        { href: "/student/materi", label: "Materi", icon: "description" },
-        { href: "/student/tugas", label: "Tugas", icon: "assignment" },
-        { href: "/student/ujian", label: "Ujian", icon: "quiz" },
+        { href: "/student/materi", label: "Materi Belajar", icon: "description" },
+        { href: "/student/tugas", label: "Tugas Saya", icon: "assignment" },
+        { href: "/student/ujian", label: "Ujian & Kuis", icon: "quiz" },
       ],
     },
     {
-      title: "IoT & Penelitian",
-      items: [{ href: "/student/iot", label: "Sensor & Telemetri", icon: "sensors" }],
-    },
-    {
-      title: "Analitik & Bantuan",
+      title: "Bantuan & Evaluasi",
       items: [
-        { href: "/student/laporan", label: "Nilai Saya", icon: "analytics" },
+        { href: "/student/laporan", label: "Riwayat Nilai", icon: "analytics" },
         { href: "/student/keluhan", label: "Keluhan & Bantuan", icon: "chat_bubble" },
       ],
     },
@@ -151,14 +135,16 @@ export const SIDEBAR: Record<Role, NavSection[]> = {
 export const BOTTOM_NAV: Record<Role, NavItem[]> = {
   SUPERADMIN: [
     { href: "/superadmin", label: "Home", icon: "home", exact: true },
-    { href: "/superadmin/pengguna", label: "Pengguna", icon: "groups" },
-    { href: "/superadmin/iot", label: "IoT", icon: "sensors" },
+    { href: "/superadmin/materi", label: "Materi", icon: "description" },
+    { href: "/superadmin/tugas", label: "Tugas", icon: "assignment" },
+    { href: "/superadmin/ujian", label: "Ujian", icon: "quiz" },
     { href: "/superadmin/laporan", label: "Laporan", icon: "analytics" },
   ],
   ADMIN: [
     { href: "/admin", label: "Home", icon: "home", exact: true },
-    { href: "/admin/pengguna", label: "Pengguna", icon: "groups" },
-    { href: "/admin/iot", label: "IoT", icon: "sensors" },
+    { href: "/admin/materi", label: "Materi", icon: "description" },
+    { href: "/admin/tugas", label: "Tugas", icon: "assignment" },
+    { href: "/admin/ujian", label: "Ujian", icon: "quiz" },
     { href: "/admin/laporan", label: "Laporan", icon: "analytics" },
   ],
   TEACHER: [
@@ -166,14 +152,14 @@ export const BOTTOM_NAV: Record<Role, NavItem[]> = {
     { href: "/teacher/materi", label: "Materi", icon: "description" },
     { href: "/teacher/tugas", label: "Tugas", icon: "assignment" },
     { href: "/teacher/ujian", label: "Ujian", icon: "quiz" },
-    { href: "/teacher/iot", label: "IoT", icon: "sensors" },
+    { href: "/teacher/laporan", label: "Nilai", icon: "analytics" },
   ],
   STUDENT: [
     { href: "/student", label: "Home", icon: "home", exact: true },
     { href: "/student/materi", label: "Materi", icon: "description" },
     { href: "/student/tugas", label: "Tugas", icon: "assignment" },
     { href: "/student/ujian", label: "Ujian", icon: "quiz" },
-    { href: "/student/iot", label: "IoT", icon: "sensors" },
+    { href: "/student/laporan", label: "Nilai", icon: "analytics" },
   ],
 };
 

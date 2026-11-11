@@ -33,7 +33,7 @@ export default async function SuperadminComplaintsPage() {
     <>
       <PageHeader
         title="Manajemen Keluhan & Tiket"
-        description="Pusat respons keluhan pengguna, kendala teknis node sensor IoT, dan administrasi sistem."
+        description="Pusat respons keluhan pengguna, kendala teknis pembelajaran, dan administrasi sistem."
       />
 
       <StatGrid>
