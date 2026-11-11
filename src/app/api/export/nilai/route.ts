@@ -7,10 +7,11 @@ import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {
   const session = await auth();
-  const teacherId = (session?.user as any)?.id as string;
-  const role = (session?.user as any)?.role as string;
+  const user = session?.user as { id?: string; role?: string } | undefined;
+  const teacherId = user?.id;
+  const role = user?.role;
 
-  if (!teacherId || !["TEACHER", "ADMIN", "SUPERADMIN"].includes(role)) {
+  if (!teacherId || !role || !["TEACHER", "ADMIN", "SUPERADMIN"].includes(role)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
@@ -25,13 +26,14 @@ export async function GET(req: Request) {
       submittedAt: tugasSubmissions.submittedAt,
       kelasName: kelas.name,
       kelasId: kelas.id,
+      classTeacherId: kelas.teacherId,
     })
     .from(tugasSubmissions)
     .innerJoin(tugas, eq(tugasSubmissions.tugasId, tugas.id))
     .innerJoin(users, eq(tugasSubmissions.studentId, users.id))
     .innerJoin(kelas, eq(tugas.kelasId, kelas.id));
 
-  const filtered = kelasId ? rows.filter((r) => r.kelasId === kelasId) : rows;
+  const filtered = rows.filter((r) => (role !== "TEACHER" || r.classTeacherId === teacherId) && (!kelasId || r.kelasId === kelasId));
 
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet("Nilai Tugas");

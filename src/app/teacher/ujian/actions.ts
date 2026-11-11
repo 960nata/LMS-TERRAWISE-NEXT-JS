@@ -1,14 +1,13 @@
 "use server";
 import { db } from "@/lib/db";
 import { ujian, soal, notifications, enrollments } from "@/lib/db/schema";
-import { auth } from "@/lib/auth";
+import { requireClassManager } from "@/lib/access";
 import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 
 export async function createUjian(formData: FormData) {
-  const session = await auth();
-  const authorId = (session?.user as any)?.id as string;
-  const kelasId = formData.get("kelasId") as string;
+  const kelasId = String(formData.get("kelasId") ?? "");
+  const { id: authorId } = await requireClassManager(kelasId);
   const title = formData.get("title") as string;
 
   await db.insert(ujian).values({
@@ -30,6 +29,9 @@ export async function createUjian(formData: FormData) {
 }
 
 export async function addSoal(ujianId: string, formData: FormData) {
+  const [exam] = await db.select({ kelasId: ujian.kelasId }).from(ujian).where(eq(ujian.id, ujianId)).limit(1);
+  if (!exam) throw new Error("Ujian tidak ditemukan");
+  await requireClassManager(exam.kelasId);
   const options = [
     formData.get("optionA") as string,
     formData.get("optionB") as string,
@@ -45,3 +47,23 @@ export async function addSoal(ujianId: string, formData: FormData) {
   });
   revalidatePath(`/teacher/ujian/${ujianId}`);
 }
+
+export async function deleteUjian(formData: FormData) {
+  const ujianId = formData.get("ujianId") as string;
+  const [exam] = await db.select({ kelasId: ujian.kelasId }).from(ujian).where(eq(ujian.id, ujianId)).limit(1);
+  if (!exam) throw new Error("Ujian tidak ditemukan");
+  await requireClassManager(exam.kelasId);
+  await db.delete(soal).where(eq(soal.ujianId, ujianId));
+  await db.delete(ujian).where(eq(ujian.id, ujianId));
+  revalidatePath("/teacher/ujian");
+  revalidatePath("/student/ujian");
+}
+
+export async function deleteSoal(ujianId: string, soalId: string) {
+  const [exam] = await db.select({ kelasId: ujian.kelasId }).from(ujian).where(eq(ujian.id, ujianId)).limit(1);
+  if (!exam) throw new Error("Ujian tidak ditemukan");
+  await requireClassManager(exam.kelasId);
+  await db.delete(soal).where(eq(soal.id, soalId));
+  revalidatePath(`/teacher/ujian/${ujianId}`);
+}
+

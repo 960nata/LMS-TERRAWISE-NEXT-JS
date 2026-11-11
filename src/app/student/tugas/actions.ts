@@ -1,16 +1,23 @@
 "use server";
 import { db } from "@/lib/db";
-import { tugasSubmissions } from "@/lib/db/schema";
-import { auth } from "@/lib/auth";
+import { tugasSubmissions, tugas, enrollments } from "@/lib/db/schema";
+import { requireUser } from "@/lib/access";
+import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 export async function submitTugas(formData: FormData) {
-  const session = await auth();
-  const studentId = (session?.user as any)?.id as string;
+  const { id: studentId } = await requireUser(["STUDENT"]);
+  const tugasId = String(formData.get("tugasId") ?? "");
+  const [assignment] = await db.select({ dueDate: tugas.dueDate }).from(tugas).innerJoin(enrollments, and(eq(enrollments.kelasId, tugas.kelasId), eq(enrollments.studentId, studentId))).where(eq(tugas.id, tugasId)).limit(1);
+  if (!assignment || new Date() > assignment.dueDate) throw new Error("Tugas tidak tersedia atau sudah melewati batas waktu");
+  const answerText = String(formData.get("answerText") ?? "").trim();
+  const fileUrl = String(formData.get("fileUrl") ?? "").trim() || null;
+  if (!answerText || answerText.length > 20000) throw new Error("Jawaban tidak valid");
   await db.insert(tugasSubmissions).values({
-    tugasId: formData.get("tugasId") as string,
+    tugasId,
     studentId,
-    answerText: formData.get("answerText") as string,
+    answerText,
+    fileUrl,
   });
   revalidatePath("/student/tugas");
 }

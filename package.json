@@ -10,8 +10,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seed": "tsx scripts/seed.ts",
-    "db:push": "drizzle-kit push"
+    "postinstall": "node scripts/fix-magic-string.js",
+    "seed": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/seed.ts",
+    "db:push": "node --env-file=.env ./node_modules/drizzle-kit/bin.cjs push"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.3",
