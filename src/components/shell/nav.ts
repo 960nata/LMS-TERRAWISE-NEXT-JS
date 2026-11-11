@@ -35,6 +35,14 @@ export const SIDEBAR: Record<Role, NavSection[]> = {
       ],
     },
     {
+      title: "Akademik & LMS",
+      items: [
+        { href: "/superadmin/materi", label: "Manajemen Materi", icon: "description" },
+        { href: "/superadmin/tugas", label: "Manajemen Tugas", icon: "assignment" },
+        { href: "/superadmin/ujian", label: "Manajemen Ujian", icon: "quiz" },
+      ],
+    },
+    {
       title: "Manajemen",
       items: [
         { href: "/superadmin/pengguna", label: "Manajemen Pengguna", icon: "groups" },
@@ -57,6 +65,14 @@ export const SIDEBAR: Record<Role, NavSection[]> = {
       items: [
         { href: "/admin", label: "Dashboard", icon: "grid_view", exact: true },
         { href: "/admin/notifikasi", label: "Push Notifikasi", icon: "notifications" },
+      ],
+    },
+    {
+      title: "Akademik & LMS",
+      items: [
+        { href: "/admin/materi", label: "Manajemen Materi", icon: "description" },
+        { href: "/admin/tugas", label: "Manajemen Tugas", icon: "assignment" },
+        { href: "/admin/ujian", label: "Manajemen Ujian", icon: "quiz" },
       ],
     },
     {

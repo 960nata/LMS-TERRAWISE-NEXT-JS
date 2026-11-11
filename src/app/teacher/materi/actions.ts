@@ -17,6 +17,8 @@ export async function createMateri(formData: FormData) {
     authorId,
   });
   revalidatePath("/teacher/materi");
+  revalidatePath("/admin/materi");
+  revalidatePath("/superadmin/materi");
   revalidatePath("/student/materi");
 }
 
@@ -31,5 +33,7 @@ export async function deleteMateri(formData: FormData) {
   await requireClassManager(entry.kelasId);
   await db.delete(materi).where(eq(materi.id, materiId));
   revalidatePath("/teacher/materi");
+  revalidatePath("/admin/materi");
+  revalidatePath("/superadmin/materi");
   revalidatePath("/student/materi");
 }

@@ -28,6 +28,7 @@ export default async function UjianPage() {
   const user = session?.user as { id: string; role: string };
   const teacherId = user.id;
   const classFilter = user.role === "TEACHER" ? eq(kelas.teacherId, teacherId) : undefined;
+  const basePath = user.role === "SUPERADMIN" ? "/superadmin" : user.role === "ADMIN" ? "/admin" : "/teacher";
 
   const myKelas = await db.select().from(kelas).where(classFilter);
   const myUjian = await db
@@ -153,7 +154,7 @@ export default async function UjianPage() {
                   <td className={`${tdClass} text-right`}>
                     <div className="flex items-center justify-end gap-2">
                       <Link
-                        href={`/teacher/ujian/${u.id}`}
+                        href={`${basePath}/ujian/${u.id}`}
                         className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1.5 text-[10px] font-bold tracking-widest uppercase transition-colors hover:border-black hover:bg-black hover:text-white"
                       >
                         <Icon name="edit" size={14} /> Kelola Soal

@@ -26,6 +26,9 @@ export async function createUjian(formData: FormData) {
     );
   }
   revalidatePath("/teacher/ujian");
+  revalidatePath("/admin/ujian");
+  revalidatePath("/superadmin/ujian");
+  revalidatePath("/student/ujian");
 }
 
 export async function addSoal(ujianId: string, formData: FormData) {
@@ -56,6 +59,9 @@ export async function deleteUjian(formData: FormData) {
   await db.delete(soal).where(eq(soal.ujianId, ujianId));
   await db.delete(ujian).where(eq(ujian.id, ujianId));
   revalidatePath("/teacher/ujian");
+  revalidatePath("/admin/ujian");
+  revalidatePath("/superadmin/ujian");
+  revalidatePath("/student/ujian");
   revalidatePath("/student/ujian");
 }
 

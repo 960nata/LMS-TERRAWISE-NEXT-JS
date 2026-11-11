@@ -26,6 +26,9 @@ export async function createTugas(formData: FormData) {
     );
   }
   revalidatePath("/teacher/tugas");
+  revalidatePath("/admin/tugas");
+  revalidatePath("/superadmin/tugas");
+  revalidatePath("/student/tugas");
 }
 
 export async function gradeSubmission(submissionId: string, score: number, feedback: string) {
@@ -35,6 +38,9 @@ export async function gradeSubmission(submissionId: string, score: number, feedb
   if (!Number.isFinite(score) || score < 0 || score > entry.maxScore || feedback.length > 5000) throw new Error("Nilai atau feedback tidak valid");
   await db.update(tugasSubmissions).set({ score, feedback, gradedAt: new Date() }).where(eq(tugasSubmissions.id, submissionId));
   revalidatePath("/teacher/tugas");
+  revalidatePath("/admin/tugas");
+  revalidatePath("/superadmin/tugas");
+  revalidatePath("/student/tugas");
 }
 
 export async function gradeSubmissionAction(formData: FormData) {
@@ -52,5 +58,8 @@ export async function deleteTugas(formData: FormData) {
   await db.delete(tugasSubmissions).where(eq(tugasSubmissions.tugasId, tugasId));
   await db.delete(tugas).where(eq(tugas.id, tugasId));
   revalidatePath("/teacher/tugas");
+  revalidatePath("/admin/tugas");
+  revalidatePath("/superadmin/tugas");
+  revalidatePath("/student/tugas");
 }
 

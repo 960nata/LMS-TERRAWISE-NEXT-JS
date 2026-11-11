@@ -28,7 +28,8 @@ export default async function UjianDetailPage({ params }: { params: Promise<{ id
   const { id } = await params;
   const [u] = await db.select().from(ujian).where(eq(ujian.id, id));
   if (!u) notFound();
-  await requireClassManager(u.kelasId);
+  const user = await requireClassManager(u.kelasId);
+  const backPath = user.role === "SUPERADMIN" ? "/superadmin/ujian" : user.role === "ADMIN" ? "/admin/ujian" : "/teacher/ujian";
 
   const [soalList, attempts] = await Promise.all([
     db.select().from(soal).where(eq(soal.ujianId, id)).orderBy(asc(soal.order), asc(soal.id)),
@@ -53,7 +54,7 @@ export default async function UjianDetailPage({ params }: { params: Promise<{ id
   return (
     <>
       <Link
-        href="/teacher/ujian"
+        href={backPath}
         className="mb-4 inline-flex items-center gap-1 text-xs font-bold text-gray-400 hover:text-black"
       >
         <Icon name="arrow_back" size={16} /> Kembali ke Manajemen Ujian
