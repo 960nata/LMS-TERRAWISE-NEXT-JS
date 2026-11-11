@@ -28,6 +28,44 @@ export async function createUjian(formData: FormData) {
     })
     .returning();
 
+  // If questionsData is provided directly from the interactive creation wizard
+  const questionsDataRaw = formData.get("questionsData") as string | null;
+  if (questionsDataRaw) {
+    try {
+      const questionsList = JSON.parse(questionsDataRaw);
+      if (Array.isArray(questionsList) && questionsList.length > 0) {
+        for (let i = 0; i < questionsList.length; i++) {
+          const q = questionsList[i];
+          if (q.question && q.question.trim().length > 0) {
+            const itemType = q.type === "ESSAY" || tipe === "ESSAY" ? "ESSAY" : "MULTIPLE_CHOICE";
+            if (itemType === "MULTIPLE_CHOICE") {
+              await db.insert(soal).values({
+                ujianId: newExam.id,
+                type: "MULTIPLE_CHOICE",
+                question: q.question,
+                options: [q.optionA || "", q.optionB || "", q.optionC || "", q.optionD || ""],
+                correctAnswer: (q.correctAnswer || "A").toUpperCase(),
+                points: Number(q.points) || 10,
+                order: i + 1,
+              });
+            } else {
+              await db.insert(soal).values({
+                ujianId: newExam.id,
+                type: "ESSAY",
+                question: q.question,
+                points: Number(q.points) || 10,
+                rubric: q.rubric || null,
+                order: i + 1,
+              });
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Failed to parse questionsData for exam:", err);
+    }
+  }
+
   const students = await db
     .select({ studentId: enrollments.studentId })
     .from(enrollments)
