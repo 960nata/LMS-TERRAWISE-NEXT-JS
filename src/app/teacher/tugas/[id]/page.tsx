@@ -204,11 +204,91 @@ export default async function TugasDetailPage({ params }: { params: Promise<{ id
             title={`Bank Soal ${t.tipe === "MULTIPLE_CHOICE" ? "Pilihan Ganda" : "Essay"} (${soalList.length} Soal)`}
           />
           {soalList.length === 0 ? (
-            <div className="rounded-xl border border-gray-100 md:rounded-2xl">
-              <EmptyState
-                icon="quiz"
-                text="Belum ada soal pada tugas ini. Silakan klik tombol 'Tambah Soal' di atas untuk membuat soal baru."
-              />
+            <div className="rounded-2xl border-2 border-dashed border-gray-300 bg-white p-8 text-center md:p-12">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-black text-white">
+                <Icon name="quiz" size={28} />
+              </div>
+              <h3 className="mt-4 text-base font-extrabold uppercase tracking-tight text-black">
+                Bank Soal Masih Kosong
+              </h3>
+              <p className="mx-auto mt-1 max-w-md text-xs text-gray-500">
+                Tugas bertipe {tipeLabel} ini belum memiliki butir soal. Klik tombol di bawah atau tombol di atas untuk mulai membuat soal pertama.
+              </p>
+              <div className="mt-6 flex justify-center">
+                <ActionModal
+                  triggerText={t.tipe === "MULTIPLE_CHOICE" ? "+ Buat Soal Pilihan Ganda Pertama" : "+ Buat Soal Essay Pertama"}
+                  triggerIcon="add"
+                  title={t.tipe === "MULTIPLE_CHOICE" ? "Tambah Soal Pilihan Ganda" : "Tambah Soal Essay"}
+                  description={
+                    t.tipe === "MULTIPLE_CHOICE"
+                      ? "Tambahkan soal baru dengan 4 pilihan jawaban dan kunci jawaban yang benar."
+                      : "Tambahkan pertanyaan uraian/essay beserta bobot nilai."
+                  }
+                >
+                  <form action={addSoalBound} className="space-y-4 text-left">
+                    <input type="hidden" name="type" value={t.tipe} />
+                    <div>
+                      <Label htmlFor="empty-question">Teks Pertanyaan Soal</Label>
+                      <textarea
+                        id="empty-question"
+                        name="question"
+                        placeholder="Tuliskan teks pertanyaan soal tugas..."
+                        required
+                        rows={3}
+                        className={inputClass}
+                      />
+                    </div>
+
+                    {t.tipe === "MULTIPLE_CHOICE" && (
+                      <>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {(["A", "B", "C", "D"] as const).map((opt) => (
+                            <div key={opt}>
+                              <Label htmlFor={`empty-option${opt}`}>Pilihan {opt}</Label>
+                              <input
+                                id={`empty-option${opt}`}
+                                name={`option${opt}`}
+                                placeholder={`Teks pilihan ${opt}`}
+                                required
+                                className={inputClass}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                        <div>
+                          <Label htmlFor="empty-correctAnswer">Kunci Jawaban Benar</Label>
+                          <select id="empty-correctAnswer" name="correctAnswer" required className={inputClass}>
+                            <option value="">Pilih Opsi Kunci Jawaban</option>
+                            {["A", "B", "C", "D"].map((opt) => (
+                              <option key={opt} value={opt}>
+                                Opsi {opt}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </>
+                    )}
+
+                    <div>
+                      <Label htmlFor="empty-points">Bobot Poin Soal</Label>
+                      <input
+                        id="empty-points"
+                        name="points"
+                        type="number"
+                        defaultValue={t.tipe === "MULTIPLE_CHOICE" ? 25 : 30}
+                        required
+                        className={inputClass}
+                      />
+                    </div>
+
+                    <div className="pt-2">
+                      <button type="submit" className={`${primaryButtonClass} w-full`}>
+                        <Icon name="add" size={18} /> Simpan &amp; Tambahkan ke Tugas
+                      </button>
+                    </div>
+                  </form>
+                </ActionModal>
+              </div>
             </div>
           ) : (
             <div className="space-y-4">

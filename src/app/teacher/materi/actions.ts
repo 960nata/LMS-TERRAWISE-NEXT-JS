@@ -3,11 +3,12 @@ import { db } from "@/lib/db";
 import { materi } from "@/lib/db/schema";
 import { requireClassManager } from "@/lib/access";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 
 export async function createMateri(formData: FormData) {
   const kelasId = String(formData.get("kelasId") ?? "");
-  const { id: authorId } = await requireClassManager(kelasId);
+  const { id: authorId, role } = await requireClassManager(kelasId);
   const fileUrl = (formData.get("fileUrl") as string)?.trim() || null;
   await db.insert(materi).values({
     title: formData.get("title") as string,
@@ -20,6 +21,9 @@ export async function createMateri(formData: FormData) {
   revalidatePath("/admin/materi");
   revalidatePath("/superadmin/materi");
   revalidatePath("/student/materi");
+
+  const basePath = role === "SUPERADMIN" ? "/superadmin" : role === "ADMIN" ? "/admin" : "/teacher";
+  redirect(`${basePath}/materi`);
 }
 
 export async function deleteMateri(formData: FormData) {

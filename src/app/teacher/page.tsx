@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { kelas, materi, tugas, tugasSubmissions, ujian, enrollments } from "@/lib/db/schema";
 import { count, eq, isNull, isNotNull, and } from "drizzle-orm";
+import Link from "next/link";
 import { EmptyState, Icon, MenuCard, Panel, StatRows, WelcomeHeader } from "@/components/ui";
 
 export const instant = false;
@@ -51,6 +52,40 @@ export default async function TeacherDashboard() {
         Guru — Kelola pembelajaran dan kelas Anda. Sebagai Guru, Anda dapat mengelola pembelajaran, tugas, dan ujian untuk
         kelas Anda.
       </WelcomeHeader>
+
+      {/* Aksi Cepat Buat Tugas, Ujian, Materi */}
+      <div className="mb-8 rounded-2xl border-2 border-black bg-white p-5 shadow-sm">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h3 className="text-base font-extrabold uppercase tracking-tight text-black flex items-center gap-2">
+              <Icon name="add_circle" size={20} /> Aksi Cepat Buat Pembelajaran
+            </h3>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Buat penugasan 4 tipe, jadwalkan ujian online 3 tipe, atau publikasikan modul materi baru.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+            <Link
+              href="/teacher/tugas/create"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-black px-4 py-2.5 text-xs font-bold text-white uppercase hover:bg-neutral-800 transition-colors shadow-sm"
+            >
+              <Icon name="assignment" size={16} /> + Buat Tugas
+            </Link>
+            <Link
+              href="/teacher/ujian/create"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-black px-4 py-2.5 text-xs font-bold text-white uppercase hover:bg-neutral-800 transition-colors shadow-sm"
+            >
+              <Icon name="quiz" size={16} /> + Jadwalkan Ujian
+            </Link>
+            <Link
+              href="/teacher/materi/create"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-black bg-white px-4 py-2.5 text-xs font-bold text-black uppercase hover:bg-black hover:text-white transition-colors"
+            >
+              <Icon name="description" size={16} /> + Upload Materi
+            </Link>
+          </div>
+        </div>
+      </div>
 
       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-6 lg:mb-12 lg:gap-8">
         <MenuCard

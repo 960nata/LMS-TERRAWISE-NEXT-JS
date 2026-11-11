@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { materi, kelas } from "@/lib/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { createMateri, deleteMateri } from "./actions";
+import Link from "next/link";
 import {
   ActionModal,
   DataTable,
@@ -26,6 +27,12 @@ export default async function MateriPage() {
   const user = session?.user as { id: string; role: string };
   const teacherId = user.id;
   const classFilter = user.role === "TEACHER" ? eq(kelas.teacherId, teacherId) : undefined;
+  const basePath =
+    user.role === "SUPERADMIN"
+      ? "/superadmin"
+      : user.role === "ADMIN"
+      ? "/admin"
+      : "/teacher";
 
   const myKelas = await db.select().from(kelas).where(classFilter);
   const myMateri = await db
@@ -48,43 +55,52 @@ export default async function MateriPage() {
         title="Manajemen Materi"
         description="Kelola materi pembelajaran, modul, dan dokumen pendukung"
         action={
-          <ActionModal
-            triggerText="Tambah Materi"
-            triggerIcon="add"
-            title="Tambah Materi Pembelajaran"
-            description="Publikasikan modul, rangkuman, atau dokumen materi baru untuk siswa di kelas."
-          >
-            <form action={createMateri} className="space-y-4">
-              <div>
-                <Label htmlFor="kelasId">Kelas Tujuan</Label>
-                <select id="kelasId" name="kelasId" required className={inputClass}>
-                  <option value="">Pilih Kelas</option>
-                  {myKelas.map((k) => (
-                    <option key={k.id} value={k.id}>
-                      {k.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <Label htmlFor="title">Judul Materi</Label>
-                <input id="title" name="title" placeholder="cth: Pengantar Algoritma dan Pemrograman Modern" required className={inputClass} />
-              </div>
-              <div>
-                <Label htmlFor="content">Isi Materi</Label>
-                <textarea id="content" name="content" placeholder="Tuliskan isi materi atau ringkasan penjelasan..." required rows={4} className={inputClass} />
-              </div>
-              <div>
-                <Label htmlFor="fileUrl">Tautan Materi / Dokumen / Video (Opsional)</Label>
-                <input id="fileUrl" type="url" name="fileUrl" placeholder="https://drive.google.com/... atau https://youtube.com/..." className={inputClass} />
-              </div>
-              <div className="pt-2">
-                <button type="submit" className={`${primaryButtonClass} w-full`}>
-                  <Icon name="add" size={18} /> Publikasikan Materi
-                </button>
-              </div>
-            </form>
-          </ActionModal>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              href={`${basePath}/materi/create`}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-black bg-black px-4 py-2.5 text-xs md:text-sm font-bold text-white transition-all hover:bg-neutral-800 shadow-sm"
+            >
+              <Icon name="add" size={18} />
+              <span>+ Upload Materi Baru</span>
+            </Link>
+            <ActionModal
+              triggerText="Buka Modal"
+              triggerIcon="open_in_new"
+              title="Tambah Materi Pembelajaran"
+              description="Publikasikan modul, rangkuman, atau dokumen materi baru untuk siswa di kelas."
+            >
+              <form action={createMateri} className="space-y-4">
+                <div>
+                  <Label htmlFor="kelasId">Kelas Tujuan</Label>
+                  <select id="kelasId" name="kelasId" required className={inputClass}>
+                    <option value="">Pilih Kelas</option>
+                    {myKelas.map((k) => (
+                      <option key={k.id} value={k.id}>
+                        {k.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <Label htmlFor="title">Judul Materi</Label>
+                  <input id="title" name="title" placeholder="cth: Pengantar Algoritma dan Pemrograman Modern" required className={inputClass} />
+                </div>
+                <div>
+                  <Label htmlFor="content">Isi Materi</Label>
+                  <textarea id="content" name="content" placeholder="Tuliskan isi materi atau ringkasan penjelasan..." required rows={4} className={inputClass} />
+                </div>
+                <div>
+                  <Label htmlFor="fileUrl">Tautan Materi / Dokumen / Video (Opsional)</Label>
+                  <input id="fileUrl" type="url" name="fileUrl" placeholder="https://drive.google.com/... atau https://youtube.com/..." className={inputClass} />
+                </div>
+                <div className="pt-2">
+                  <button type="submit" className={`${primaryButtonClass} w-full`}>
+                    <Icon name="add" size={18} /> Publikasikan Materi
+                  </button>
+                </div>
+              </form>
+            </ActionModal>
+          </div>
         }
       />
 

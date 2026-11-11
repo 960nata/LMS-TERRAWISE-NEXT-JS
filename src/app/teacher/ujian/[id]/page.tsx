@@ -180,8 +180,113 @@ export default async function UjianDetailPage({ params }: { params: Promise<{ id
       <section className="mt-8">
         <SectionTitle icon="quiz" title={`Bank Soal Ujian (${soalList.length} Soal)`} />
         {soalList.length === 0 ? (
-          <div className="rounded-xl border border-gray-100 md:rounded-2xl">
-            <EmptyState icon="quiz" text="Belum ada soal pada ujian ini." />
+          <div className="rounded-2xl border-2 border-dashed border-gray-300 bg-white p-8 text-center md:p-12">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-black text-white">
+              <Icon name="quiz" size={28} />
+            </div>
+            <h3 className="mt-4 text-base font-extrabold uppercase tracking-tight text-black">
+              Bank Soal Ujian Masih Kosong
+            </h3>
+            <p className="mx-auto mt-1 max-w-md text-xs text-gray-500">
+              Ujian bertipe {tipeLabel} ini belum memiliki butir soal. Klik tombol di bawah atau tombol di pojok kanan atas untuk mulai membuat soal ujian pertama siswa.
+            </p>
+            <div className="mt-6 flex justify-center">
+              <ActionModal
+                triggerText="+ Buat Butir Soal Pertama Sekarang"
+                triggerIcon="add"
+                title={`Tambah Soal Ujian (${tipeLabel})`}
+                description="Tambahkan soal baru ke dalam ujian ini sesuai tipe yang dipilih."
+              >
+                <form action={addSoalBound} className="space-y-4 text-left">
+                  {u.tipe === "MIXED" ? (
+                    <div>
+                      <Label htmlFor="empty-u-type">Tipe Pertanyaan</Label>
+                      <select id="empty-u-type" name="type" required className={inputClass}>
+                        <option value="MULTIPLE_CHOICE">Pilihan Ganda</option>
+                        <option value="ESSAY">Soal Essay</option>
+                      </select>
+                    </div>
+                  ) : (
+                    <input type="hidden" name="type" value={u.tipe} />
+                  )}
+
+                  <div>
+                    <Label htmlFor="empty-u-question">Teks Pertanyaan Soal</Label>
+                    <textarea
+                      id="empty-u-question"
+                      name="question"
+                      placeholder="Tuliskan teks pertanyaan soal ujian..."
+                      required
+                      rows={2}
+                      className={inputClass}
+                    />
+                  </div>
+
+                  {u.tipe !== "ESSAY" && (
+                    <div className="rounded-xl border border-gray-200 bg-gray-50/50 p-3 space-y-3">
+                      <p className="text-[10px] font-bold tracking-wider text-gray-400 uppercase">
+                        Opsi Jawaban Pilihan Ganda (Kosongkan jika membuat soal essay)
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {(["A", "B", "C", "D"] as const).map((o) => (
+                          <div key={o}>
+                            <Label htmlFor={`empty-u-opt-${o}`}>Pilihan {o}</Label>
+                            <input
+                              id={`empty-u-opt-${o}`}
+                              name={`option${o}`}
+                              placeholder={`Teks pilihan ${o}`}
+                              className={inputClass}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                      <div>
+                        <Label htmlFor="empty-u-correctAnswer">Kunci Jawaban Benar</Label>
+                        <select id="empty-u-correctAnswer" name="correctAnswer" className={inputClass}>
+                          <option value="">Pilih Kunci (hanya untuk Pilihan Ganda)</option>
+                          {["A", "B", "C", "D"].map((o) => (
+                            <option key={o} value={o}>
+                              Opsi {o}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="empty-u-points">Bobot Poin</Label>
+                      <input
+                        id="empty-u-points"
+                        name="points"
+                        type="number"
+                        defaultValue={u.tipe === "MULTIPLE_CHOICE" ? 5 : 20}
+                        required
+                        className={inputClass}
+                      />
+                    </div>
+                    {u.tipe !== "MULTIPLE_CHOICE" && (
+                      <div>
+                        <Label htmlFor="empty-u-rubric">Rubrik Penilaian (Essay)</Label>
+                        <input
+                          id="empty-u-rubric"
+                          name="rubric"
+                          placeholder="cth: Menjelaskan 3 langkah utama secara runtut"
+                          className={inputClass}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="pt-2">
+                    <button type="submit" className={`${primaryButtonClass} w-full`}>
+                      <Icon name="add" size={18} /> Simpan Soal ke Ujian
+                    </button>
+                  </div>
+                </form>
+              </ActionModal>
+            </div>
           </div>
         ) : (
           <div className="space-y-4">

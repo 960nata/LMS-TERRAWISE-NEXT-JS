@@ -117,12 +117,20 @@ export default async function TugasPage() {
         title="Manajemen Tugas"
         description="Kelola 4 tipe tugas (Pilihan Ganda, Essay, Mandiri, Kelompok), atur bank soal, dan evaluasi hasil belajar siswa."
         action={
-          <ActionModal
-            triggerText="Tambah Tugas"
-            triggerIcon="add"
-            title="Tambah Tugas Baru (4 Tipe Pilihan)"
-            description="Buat penugasan baru dengan pilihan tipe Pilihan Ganda, Essay, Mandiri, atau Kelompok."
-          >
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              href={`${basePath}/tugas/create`}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-black bg-black px-4 py-2.5 text-xs md:text-sm font-bold text-white transition-all hover:bg-neutral-800 shadow-sm"
+            >
+              <Icon name="add" size={18} />
+              <span>+ Buat Tugas Baru</span>
+            </Link>
+            <ActionModal
+              triggerText="Buka Modal"
+              triggerIcon="open_in_new"
+              title="Tambah Tugas Baru (4 Tipe Pilihan)"
+              description="Buat penugasan baru dengan pilihan tipe Pilihan Ganda, Essay, Mandiri, atau Kelompok."
+            >
             <form action={createTugas} className="space-y-4">
               <div>
                 <Label htmlFor="kelasId">Kelas Tujuan</Label>
@@ -190,6 +198,7 @@ export default async function TugasPage() {
               </div>
             </form>
           </ActionModal>
+          </div>
         }
       />
 
@@ -200,36 +209,60 @@ export default async function TugasPage() {
         <StatCard value={gradedSubs} label="Sudah Dinilai" />
       </StatGrid>
 
-      {/* Ringkasan 4 Tipe Tugas */}
+      {/* Ringkasan 4 Tipe Tugas dengan Quick Action Buat */}
       <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="rounded-xl border border-black bg-white p-3 text-center">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Tipe 1</p>
+        <Link
+          href={`${basePath}/tugas/create?tipe=MULTIPLE_CHOICE`}
+          className="group rounded-xl border border-black bg-white p-3.5 text-center transition-all hover:bg-black hover:text-white"
+        >
+          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 group-hover:text-gray-300">Tipe 1</p>
           <p className="font-bold text-xs sm:text-sm mt-0.5">Pilihan Ganda</p>
-          <p className="text-[10px] text-gray-500 mt-1">
+          <p className="text-[10px] text-gray-500 group-hover:text-gray-300 mt-1">
             {myTugas.filter((t) => t.tipe === "MULTIPLE_CHOICE").length} Tugas
           </p>
-        </div>
-        <div className="rounded-xl border border-black bg-white p-3 text-center">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Tipe 2</p>
+          <span className="mt-2 inline-block rounded-md bg-gray-100 group-hover:bg-white group-hover:text-black px-2 py-0.5 text-[10px] font-bold">
+            + Buat PG
+          </span>
+        </Link>
+        <Link
+          href={`${basePath}/tugas/create?tipe=ESSAY`}
+          className="group rounded-xl border border-black bg-white p-3.5 text-center transition-all hover:bg-black hover:text-white"
+        >
+          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 group-hover:text-gray-300">Tipe 2</p>
           <p className="font-bold text-xs sm:text-sm mt-0.5">Soal Essay</p>
-          <p className="text-[10px] text-gray-500 mt-1">
+          <p className="text-[10px] text-gray-500 group-hover:text-gray-300 mt-1">
             {myTugas.filter((t) => t.tipe === "ESSAY").length} Tugas
           </p>
-        </div>
-        <div className="rounded-xl border border-black bg-white p-3 text-center">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Tipe 3</p>
+          <span className="mt-2 inline-block rounded-md bg-gray-100 group-hover:bg-white group-hover:text-black px-2 py-0.5 text-[10px] font-bold">
+            + Buat Essay
+          </span>
+        </Link>
+        <Link
+          href={`${basePath}/tugas/create?tipe=MANDIRI`}
+          className="group rounded-xl border border-black bg-white p-3.5 text-center transition-all hover:bg-black hover:text-white"
+        >
+          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 group-hover:text-gray-300">Tipe 3</p>
           <p className="font-bold text-xs sm:text-sm mt-0.5">Tugas Mandiri</p>
-          <p className="text-[10px] text-gray-500 mt-1">
+          <p className="text-[10px] text-gray-500 group-hover:text-gray-300 mt-1">
             {myTugas.filter((t) => t.tipe === "MANDIRI").length} Tugas
           </p>
-        </div>
-        <div className="rounded-xl border border-black bg-white p-3 text-center">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Tipe 4</p>
+          <span className="mt-2 inline-block rounded-md bg-gray-100 group-hover:bg-white group-hover:text-black px-2 py-0.5 text-[10px] font-bold">
+            + Buat Mandiri
+          </span>
+        </Link>
+        <Link
+          href={`${basePath}/tugas/create?tipe=KELOMPOK`}
+          className="group rounded-xl border border-black bg-white p-3.5 text-center transition-all hover:bg-black hover:text-white"
+        >
+          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 group-hover:text-gray-300">Tipe 4</p>
           <p className="font-bold text-xs sm:text-sm mt-0.5">Proyek Kelompok</p>
-          <p className="text-[10px] text-gray-500 mt-1">
+          <p className="text-[10px] text-gray-500 group-hover:text-gray-300 mt-1">
             {myTugas.filter((t) => t.tipe === "KELOMPOK").length} Tugas
           </p>
-        </div>
+          <span className="mt-2 inline-block rounded-md bg-gray-100 group-hover:bg-white group-hover:text-black px-2 py-0.5 text-[10px] font-bold">
+            + Buat Kelompok
+          </span>
+        </Link>
       </div>
 
       {/* Daftar Tugas Guru */}

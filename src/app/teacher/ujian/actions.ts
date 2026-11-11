@@ -3,26 +3,30 @@ import { db } from "@/lib/db";
 import { ujian, soal, ujianAttempts, notifications, enrollments } from "@/lib/db/schema";
 import { requireClassManager } from "@/lib/access";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 
 export async function createUjian(formData: FormData) {
   const kelasId = String(formData.get("kelasId") ?? "");
-  const { id: authorId } = await requireClassManager(kelasId);
+  const { id: authorId, role } = await requireClassManager(kelasId);
   const title = formData.get("title") as string;
   const rawTipe = (formData.get("tipe") as string) || "MULTIPLE_CHOICE";
   const tipe = (["MULTIPLE_CHOICE", "ESSAY", "MIXED"].includes(rawTipe)
     ? rawTipe
     : "MULTIPLE_CHOICE") as "MULTIPLE_CHOICE" | "ESSAY" | "MIXED";
 
-  await db.insert(ujian).values({
-    title,
-    tipe,
-    startTime: new Date(formData.get("startTime") as string),
-    endTime: new Date(formData.get("endTime") as string),
-    durationMinutes: Number(formData.get("durationMinutes")),
-    kelasId,
-    authorId,
-  });
+  const [newExam] = await db
+    .insert(ujian)
+    .values({
+      title,
+      tipe,
+      startTime: new Date(formData.get("startTime") as string),
+      endTime: new Date(formData.get("endTime") as string),
+      durationMinutes: Number(formData.get("durationMinutes")),
+      kelasId,
+      authorId,
+    })
+    .returning();
 
   const students = await db
     .select({ studentId: enrollments.studentId })
@@ -49,6 +53,9 @@ export async function createUjian(formData: FormData) {
   revalidatePath("/admin/ujian");
   revalidatePath("/superadmin/ujian");
   revalidatePath("/student/ujian");
+
+  const basePath = role === "SUPERADMIN" ? "/superadmin" : role === "ADMIN" ? "/admin" : "/teacher";
+  redirect(`${basePath}/ujian/${newExam.id}`);
 }
 
 export async function addSoal(ujianId: string, formData: FormData) {

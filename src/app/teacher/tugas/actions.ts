@@ -3,26 +3,30 @@ import { db } from "@/lib/db";
 import { tugas, tugasSoal, tugasSubmissions, notifications, enrollments } from "@/lib/db/schema";
 import { requireClassManager } from "@/lib/access";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 
 export async function createTugas(formData: FormData) {
   const kelasId = String(formData.get("kelasId") ?? "");
-  const { id: authorId } = await requireClassManager(kelasId);
+  const { id: authorId, role } = await requireClassManager(kelasId);
   const title = formData.get("title") as string;
   const rawTipe = (formData.get("tipe") as string) || "MANDIRI";
   const tipe = (["MULTIPLE_CHOICE", "ESSAY", "MANDIRI", "KELOMPOK"].includes(rawTipe)
     ? rawTipe
     : "MANDIRI") as "MULTIPLE_CHOICE" | "ESSAY" | "MANDIRI" | "KELOMPOK";
 
-  await db.insert(tugas).values({
-    title,
-    description: formData.get("description") as string,
-    tipe,
-    dueDate: new Date(formData.get("dueDate") as string),
-    maxScore: Number(formData.get("maxScore")) || 100,
-    kelasId,
-    authorId,
-  });
+  const [newTask] = await db
+    .insert(tugas)
+    .values({
+      title,
+      description: formData.get("description") as string,
+      tipe,
+      dueDate: new Date(formData.get("dueDate") as string),
+      maxScore: Number(formData.get("maxScore")) || 100,
+      kelasId,
+      authorId,
+    })
+    .returning();
 
   const students = await db
     .select({ studentId: enrollments.studentId })
@@ -51,6 +55,13 @@ export async function createTugas(formData: FormData) {
   revalidatePath("/admin/tugas");
   revalidatePath("/superadmin/tugas");
   revalidatePath("/student/tugas");
+
+  const basePath = role === "SUPERADMIN" ? "/superadmin" : role === "ADMIN" ? "/admin" : "/teacher";
+  if (tipe === "MULTIPLE_CHOICE" || tipe === "ESSAY") {
+    redirect(`${basePath}/tugas/${newTask.id}`);
+  } else {
+    redirect(`${basePath}/tugas`);
+  }
 }
 
 export async function addTugasSoal(tugasId: string, formData: FormData) {

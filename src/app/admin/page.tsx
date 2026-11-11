@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { kelas, users } from "@/lib/db/schema";
 import { count, eq } from "drizzle-orm";
+import Link from "next/link";
 import { Icon, StatCard, StatGrid, WelcomeHeader } from "@/components/ui";
 
 export const instant = false;
@@ -36,6 +37,40 @@ export default async function AdminDashboard() {
         Admin — Kelola sistem Terra Assessment dengan akses admin. Sebagai Admin, Anda memiliki akses untuk mengelola sistem
         Terra Assessment.
       </WelcomeHeader>
+
+      {/* Aksi Cepat Buat Tugas, Ujian, Materi untuk Admin */}
+      <div className="mb-8 rounded-2xl border-2 border-black bg-white p-5 shadow-sm">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h3 className="text-base font-extrabold uppercase tracking-tight text-black flex items-center gap-2">
+              <Icon name="add_circle" size={20} /> Aksi Cepat Buat Pembelajaran
+            </h3>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Buat penugasan 4 tipe, jadwalkan ujian online 3 tipe, atau publikasikan modul materi baru.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+            <Link
+              href="/admin/tugas/create"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-black px-4 py-2.5 text-xs font-bold text-white uppercase hover:bg-neutral-800 transition-colors shadow-sm"
+            >
+              <Icon name="assignment" size={16} /> + Buat Tugas
+            </Link>
+            <Link
+              href="/admin/ujian/create"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-black px-4 py-2.5 text-xs font-bold text-white uppercase hover:bg-neutral-800 transition-colors shadow-sm"
+            >
+              <Icon name="quiz" size={16} /> + Jadwalkan Ujian
+            </Link>
+            <Link
+              href="/admin/materi/create"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-black bg-white px-4 py-2.5 text-xs font-bold text-black uppercase hover:bg-black hover:text-white transition-colors"
+            >
+              <Icon name="description" size={16} /> + Upload Materi
+            </Link>
+          </div>
+        </div>
+      </div>
 
       <StatGrid>
         <StatCard value={all.n} label="Total Pengguna" />
