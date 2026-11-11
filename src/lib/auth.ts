@@ -17,11 +17,33 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
-        const [user] = await db
+        let email = (credentials.email as string).trim().toLowerCase();
+
+        // Support aliases for Guru Demo 1 & Demo Accounts
+        if (["guru@terrawise.id", "guru1@terrawise.id", "gurudemo@terrawise.id"].includes(email)) {
+          email = "gurudemo1@terrawise.id";
+        } else if (["guru2@terrawise.id", "gurudemo@terrawise.id"].includes(email)) {
+          email = "gurudemo2@terrawise.id";
+        } else if (["siswademo1@terrawise.id", "siswa1@terrawise.id", "siswademo@terrawise.id"].includes(email)) {
+          email = "siswa@terrawise.id";
+        }
+
+        let [user] = await db
           .select()
           .from(users)
-          .where(eq(users.email, credentials.email as string))
+          .where(eq(users.email, email))
           .limit(1);
+
+        // Fallback for pre-seed / alternate email
+        if (!user && (email === "gurudemo1@terrawise.id" || email === "guru@terrawise.id")) {
+          const altEmail = email === "gurudemo1@terrawise.id" ? "guru@terrawise.id" : "gurudemo1@terrawise.id";
+          const [altUser] = await db
+            .select()
+            .from(users)
+            .where(eq(users.email, altEmail))
+            .limit(1);
+          if (altUser) user = altUser;
+        }
 
         if (!user || !user.isActive) return null;
 

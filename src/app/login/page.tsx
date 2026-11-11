@@ -381,14 +381,14 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => {
-                      setEmail("guru@terrawise.id");
+                      setEmail("gurudemo1@terrawise.id");
                       setPassword("guru123");
                       setRole("TEACHER");
                       setError("");
                     }}
                     className="rounded-lg border border-gray-200 bg-white px-2.5 py-2 text-left font-semibold text-gray-800 transition-all hover:border-black hover:bg-black hover:text-white"
                   >
-                    👨‍🏫 Guru
+                    👨‍🏫 Guru Demo 1
                   </button>
                   <button
                     type="button"
@@ -400,7 +400,7 @@ export default function LoginPage() {
                     }}
                     className="rounded-lg border border-gray-200 bg-white px-2.5 py-2 text-left font-semibold text-gray-800 transition-all hover:border-black hover:bg-black hover:text-white"
                   >
-                    🎓 Siswa
+                    🎓 Siswa Demo 1
                   </button>
                 </div>
               </div>

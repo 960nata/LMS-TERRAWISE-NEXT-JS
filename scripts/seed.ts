@@ -64,8 +64,8 @@ async function main() {
   const [guru] = await db
     .insert(users)
     .values({
-      name: "Dr. Budi Santoso, M.T.",
-      email: "guru@terrawise.id",
+      name: "Guru Demo 1",
+      email: "gurudemo1@terrawise.id",
       password: guruPass,
       role: "TEACHER",
     })
@@ -74,8 +74,8 @@ async function main() {
   const [guru2] = await db
     .insert(users)
     .values({
-      name: "Ir. Siti Rahmawati, M.Sc.",
-      email: "guru2@terrawise.id",
+      name: "Guru Demo 2",
+      email: "gurudemo2@terrawise.id",
       password: guruPass,
       role: "TEACHER",
     })
@@ -133,8 +133,8 @@ async function main() {
   const [kelasXI] = await db
     .insert(kelas)
     .values({
-      name: "XI MIPA 2 - Rekayasa Perangkat Lunak & Logika",
-      description: "Pengembangan pemikiran komputasi, arsitektur perangkat lunak, algoritma pemrograman, dan basis data terapan",
+      name: "XI MIPA 2 - Rekayasa Perangkat Lunak & Logika (Kelas Demo 1)",
+      description: "Pengembangan pemikiran komputasi, arsitektur perangkat lunak, algoritma pemrograman, dan basis data terapan (Kelas Binaan Guru Demo 1)",
       teacherId: guru.id,
     })
     .returning();
@@ -142,8 +142,8 @@ async function main() {
   const [kelasX] = await db
     .insert(kelas)
     .values({
-      name: "X MIPA 1 - Sains & Komputasi Dasar",
-      description: "Pembelajaran sains terapan, logika algoritma, dan literasi digital dasar",
+      name: "X MIPA 1 - Sains & Komputasi Dasar (Kelas Demo 1)",
+      description: "Pembelajaran sains terapan, logika algoritma, dan literasi digital dasar (Kelas Binaan Guru Demo 1)",
       teacherId: guru.id,
     })
     .returning();
@@ -151,8 +151,8 @@ async function main() {
   const [kelasXII] = await db
     .insert(kelas)
     .values({
-      name: "XII MIPA 3 - Bioteknologi & Ilmu Lingkungan",
-      description: "Kajian bioteknologi modern, dinamika ekosistem, dan sains lingkungan hidup",
+      name: "XII MIPA 3 - Bioteknologi & Ilmu Lingkungan (Kelas Demo 2)",
+      description: "Kajian bioteknologi modern, dinamika ekosistem, dan sains lingkungan hidup (Kelas Binaan Guru Demo 2)",
       teacherId: guru2.id,
     })
     .returning();
@@ -843,8 +843,8 @@ Analisis studi kasus sistem manajemen perpustakaan digital modern.
   console.log("\n=======================================================");
   console.log("🎉 SEEDING DATA BERHASIL DENGAN SUKSES! 🎉");
   console.log("=======================================================");
-  console.log(`📚 Kelas Target : XI MIPA 2 - Rekayasa Perangkat Lunak & Logika`);
-  console.log(`👨‍🏫 Guru Pengampu: Dr. Budi Santoso, M.T. (guru@terrawise.id)`);
+  console.log(`📚 Kelas Target : XI MIPA 2 - Rekayasa Perangkat Lunak & Logika (Kelas Demo 1)`);
+  console.log(`👨‍🏫 Guru Pengampu: Guru Demo 1 (gurudemo1@terrawise.id / guru@terrawise.id)`);
   console.log(`👥 Total Siswa  : 30 Siswa Aktif Terdaftar (Password: siswa123)`);
   console.log(`⏱️ Rentang Waktu: 2 BULAN PENUH (Deadline: ${twoMonthsDue.toLocaleDateString("id-ID")})`);
   console.log(`🤝 Kelompok     : 5 Kelompok Proyek (Alpha, Beta, Gamma, Delta, Epsilon)`);
