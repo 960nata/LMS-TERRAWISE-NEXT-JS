@@ -130,7 +130,9 @@ export default async function MateriPage() {
                 <td className={`${tdClass} text-gray-400`}>{i + 1}</td>
                 <td className={tdClass}>
                   <p className="font-bold">{m.title}</p>
-                  <p className="mt-1 line-clamp-2 text-xs text-gray-500">{m.content}</p>
+                  <p className="mt-1 line-clamp-2 text-xs text-gray-500">
+                    {m.content.replace(/<[^>]*>?/gm, " ").trim()}
+                  </p>
                   {m.fileUrl && (
                     <a
                       href={m.fileUrl}

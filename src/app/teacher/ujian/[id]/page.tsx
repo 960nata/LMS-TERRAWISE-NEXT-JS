@@ -9,6 +9,7 @@ import {
   ActionModal,
   Badge,
   EmptyState,
+  HtmlContent,
   Icon,
   Label,
   PageHeader,
@@ -308,7 +309,7 @@ export default async function UjianDetailPage({ params }: { params: Promise<{ id
                           {isMC ? "Pilihan Ganda" : "Soal Essay"} · {s.points} Poin
                         </span>
                       </div>
-                      <p className="text-sm font-bold text-black md:text-base">{s.question}</p>
+                      <HtmlContent content={s.question} className="text-sm font-bold text-black md:text-base leading-relaxed" />
                       {s.rubric && (
                         <p className="mt-1 text-xs text-gray-500 italic">
                           <span className="font-bold not-italic">Rubrik:</span> {s.rubric}
@@ -416,9 +417,11 @@ export default async function UjianDetailPage({ params }: { params: Promise<{ id
                             className="p-3 rounded-xl border border-gray-100 bg-gray-50 text-xs leading-relaxed"
                           >
                             <div className="flex items-start justify-between gap-2 mb-1">
-                              <p className="font-bold text-black">
-                                {idx + 1}. {s.question} ({s.points} Poin)
-                              </p>
+                              <div className="font-bold text-black flex items-start gap-1.5 flex-1">
+                                <span>{idx + 1}.</span>
+                                <HtmlContent content={s.question} className="inline-block flex-1" />
+                                <span className="text-gray-400 font-normal">({s.points} Poin)</span>
+                              </div>
                               {isMC && (
                                 <span
                                   className={`px-2 py-0.5 rounded text-[10px] font-bold ${
@@ -434,9 +437,9 @@ export default async function UjianDetailPage({ params }: { params: Promise<{ id
                               {isMC ? (
                                 <span className="font-bold text-black">Opsi {ans ?? "-"}</span>
                               ) : (
-                                <p className="mt-1 p-2 bg-white rounded border border-gray-200 whitespace-pre-wrap">
-                                  {ans || "Tidak ada jawaban tertulis."}
-                                </p>
+                                <div className="mt-1 p-2 bg-white rounded border border-gray-200">
+                                  <HtmlContent content={ans || "Tidak ada jawaban tertulis."} fallback="Tidak ada jawaban tertulis." />
+                                </div>
                               )}
                             </div>
                           </div>

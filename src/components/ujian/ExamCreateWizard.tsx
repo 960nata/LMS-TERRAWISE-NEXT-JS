@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Icon } from "@/components/ui";
+import { Icon, RichTextEditor } from "@/components/ui";
 
 type KelasOption = {
   id: string;
@@ -525,15 +525,14 @@ export function ExamCreateWizard({
 
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-black uppercase tracking-wider text-gray-500">
-                      Teks Pertanyaan Soal <span className="text-black">*</span>
+                      Teks Pertanyaan Soal (Mendukung Rich Text &amp; Gambar) <span className="text-black">*</span>
                     </label>
-                    <textarea
-                      rows={2}
+                    <RichTextEditor
                       value={q.question}
-                      onChange={(e) => updateQuestion(q.id, "question", e.target.value)}
-                      placeholder="Tuliskan teks pertanyaan soal ujian..."
+                      onChange={(val) => updateQuestion(q.id, "question", val)}
+                      placeholder="Tuliskan teks pertanyaan soal ujian di sini (tekan tombol gambar pada toolbar untuk menyisipkan diagram)..."
+                      minHeight="110px"
                       required
-                      className="w-full rounded-xl border border-gray-300 bg-white p-3.5 text-sm font-medium text-black focus:border-black focus:outline-none"
                     />
                   </div>
 

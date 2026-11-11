@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { materi, kelas, enrollments } from "@/lib/db/schema";
 import { desc, eq } from "drizzle-orm";
-import { EmptyState, Icon, PageHeader, StatCard, StatGrid, formatDate } from "@/components/ui";
+import { EmptyState, HtmlContent, Icon, PageHeader, StatCard, StatGrid, formatDate } from "@/components/ui";
 
 export const instant = false;
 
@@ -58,8 +58,8 @@ export default async function StudentMateriPage() {
                 <h3 className="mb-1 text-sm font-bold md:mb-2 md:text-base">{m.title}</h3>
                 <p className="text-[10px] font-medium text-gray-400">{formatDate(m.createdAt, false)}</p>
               </summary>
-              <div className="mt-4 border-t border-gray-100 pt-4 text-sm leading-relaxed whitespace-pre-line text-gray-600">
-                {m.content}
+              <div className="mt-4 border-t border-gray-100 pt-4 text-sm leading-relaxed text-gray-700">
+                <HtmlContent content={m.content} />
                 {m.fileUrl && (
                   <div className="mt-4 pt-3 border-t border-gray-100">
                     <a

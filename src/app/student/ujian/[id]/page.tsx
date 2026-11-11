@@ -5,7 +5,7 @@ import { eq, and, asc } from "drizzle-orm";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { submitAttempt } from "./actions";
-import { Badge, Icon, PageHeader, formatDate, inputClass, primaryButtonClass } from "@/components/ui";
+import { Badge, HtmlContent, Icon, PageHeader, formatDate, inputClass, primaryButtonClass } from "@/components/ui";
 
 export const instant = false;
 
@@ -102,10 +102,14 @@ export default async function StudentUjianPage({ params }: { params: Promise<{ i
             return (
               <div key={s.id} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
                 <div className="flex items-start justify-between gap-4 mb-2">
-                  <p className="text-sm font-bold text-black">
-                    <span className="mr-2 text-gray-400">{idx + 1}.</span>
-                    {s.question}
-                  </p>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-black text-[11px] font-bold text-white">
+                        {idx + 1}
+                      </span>
+                    </div>
+                    <HtmlContent content={s.question} className="text-sm font-bold text-black" />
+                  </div>
                   {isMC && (
                     <Badge tone={isCorrect ? "green" : "red"}>{isCorrect ? "Benar" : "Salah"}</Badge>
                   )}
@@ -137,7 +141,7 @@ export default async function StudentUjianPage({ params }: { params: Promise<{ i
                 ) : (
                   <div className="mt-3 p-3 bg-gray-50 rounded-lg text-xs border border-gray-100">
                     <span className="font-bold text-gray-500 block mb-1">Jawaban Essay yang kamu tulis:</span>
-                    <p className="text-gray-800 whitespace-pre-wrap leading-relaxed">{ans || "-"}</p>
+                    <HtmlContent content={ans || "-"} className="text-gray-800 leading-relaxed" />
                   </div>
                 )}
               </div>
@@ -172,10 +176,14 @@ export default async function StudentUjianPage({ params }: { params: Promise<{ i
           return (
             <div key={s.id} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm md:rounded-2xl">
               <div className="mb-4 flex items-start justify-between gap-4">
-                <p className="text-sm font-bold text-black">
-                  <span className="mr-2 text-gray-400 font-black">{String(idx + 1).padStart(2, "0")}.</span>
-                  {s.question}
-                </p>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-black text-[11px] font-bold text-white">
+                      {idx + 1}
+                    </span>
+                  </div>
+                  <HtmlContent content={s.question} className="text-sm font-bold text-black" />
+                </div>
                 <span className="rounded bg-gray-100 px-2 py-1 text-[10px] font-bold text-gray-600 whitespace-nowrap">
                   {s.points} POIN · {isMC ? "PG" : "ESSAY"}
                 </span>

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "quill/dist/quill.snow.css";
 
 @theme {
   --font-sans: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif;
@@ -79,3 +80,42 @@ body {
 .animate-modal-in {
   animation: modalIn 0.25s ease-out;
 }
+
+/* Quill Editor Brutalist Overrides */
+.ql-toolbar.ql-snow {
+  border: 1px solid #000000 !important;
+  border-top-left-radius: 0.75rem;
+  border-top-right-radius: 0.75rem;
+  background-color: #fafafa;
+  font-family: inherit;
+  padding: 8px 12px !important;
+}
+
+.ql-container.ql-snow {
+  border: 1px solid #000000 !important;
+  border-top: none !important;
+  border-bottom-left-radius: 0.75rem;
+  border-bottom-right-radius: 0.75rem;
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.ql-editor {
+  min-height: 120px;
+  font-family: inherit;
+  line-height: 1.6;
+}
+
+.ql-editor.ql-blank::before {
+  color: #9ca3af;
+  font-style: normal;
+}
+
+.ql-editor img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.75rem;
+  margin: 0.5rem 0;
+  border: 1px solid #e5e7eb;
+}
+

@@ -4,7 +4,7 @@ import { kelas } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import Link from "next/link";
 import { createMateri } from "../actions";
-import { Icon, Label, PageHeader, inputClass, primaryButtonClass } from "@/components/ui";
+import { Icon, Label, PageHeader, RichTextEditor, inputClass, primaryButtonClass } from "@/components/ui";
 
 export const instant = false;
 
@@ -62,14 +62,13 @@ export default async function CreateMateriPage() {
           </div>
 
           <div>
-            <Label htmlFor="content">Isi Materi / Ringkasan Modul Ajar</Label>
-            <textarea
-              id="content"
+            <Label htmlFor="content">Isi Materi / Ringkasan Modul Ajar (Mendukung Rich Text &amp; Gambar)</Label>
+            <RichTextEditor
               name="content"
-              placeholder="Tuliskan materi pelajaran, konsep penting, atau panduan studi siswa..."
+              id="content"
+              placeholder="Tuliskan modul pelajaran, konsep penting, atau sematkan gambar ilustrasi / bagan..."
+              minHeight="220px"
               required
-              rows={6}
-              className={inputClass}
             />
           </div>
 

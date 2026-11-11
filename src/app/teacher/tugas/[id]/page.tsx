@@ -9,6 +9,7 @@ import {
   ActionModal,
   Badge,
   EmptyState,
+  HtmlContent,
   Icon,
   Label,
   PageHeader,
@@ -193,7 +194,7 @@ export default async function TugasDetailPage({ params }: { params: Promise<{ id
       {/* Deskripsi & Instruksi Tugas */}
       <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
         <h4 className="text-xs font-bold tracking-widest text-gray-400 uppercase">Instruksi &amp; Petunjuk Tugas</h4>
-        <p className="mt-2 text-sm leading-relaxed text-gray-700 whitespace-pre-wrap">{t.description}</p>
+        <HtmlContent content={t.description} className="mt-2 text-sm leading-relaxed text-gray-700" />
       </div>
 
       {/* Daftar Soal jika tipe MULTIPLE_CHOICE atau ESSAY */}
@@ -310,7 +311,7 @@ export default async function TugasDetailPage({ params }: { params: Promise<{ id
                             {s.type === "MULTIPLE_CHOICE" ? "Pilihan Ganda" : "Essay"} · {s.points} Poin
                           </span>
                         </div>
-                        <p className="text-sm font-bold text-black md:text-base leading-relaxed">{s.question}</p>
+                        <HtmlContent content={s.question} className="text-sm font-bold text-black md:text-base leading-relaxed" />
 
                         {s.type === "MULTIPLE_CHOICE" && options.length > 0 && (
                           <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -435,20 +436,21 @@ export default async function TugasDetailPage({ params }: { params: Promise<{ id
                         <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">Jawaban Uraian Essay Siswa:</p>
                         {soalList.map((s, idx) => (
                           <div key={s.id} className="p-3.5 rounded-xl border border-gray-100 bg-gray-50 text-xs">
-                            <p className="font-bold text-black mb-1.5">
-                              Soal {idx + 1} ({s.points} Poin): {s.question}
-                            </p>
-                            <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
-                              {studentAnswers[s.id] || "Belum ada jawaban."}
-                            </p>
+                            <div className="font-bold text-black mb-1.5 flex items-start gap-1.5">
+                              <span>Soal {idx + 1} ({s.points} Poin):</span>
+                              <HtmlContent content={s.question} className="inline-block flex-1" />
+                            </div>
+                            <div className="text-gray-700 leading-relaxed border-t border-gray-200/60 pt-2 mt-1">
+                              <HtmlContent content={studentAnswers[s.id] || "Belum ada jawaban."} />
+                            </div>
                           </div>
                         ))}
                       </div>
                     ) : (
                       <div>
                         <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">Uraian / Laporan Siswa:</p>
-                        <div className="mt-1.5 rounded-xl border border-gray-100 bg-gray-50/70 p-4 text-xs leading-relaxed text-gray-700 whitespace-pre-wrap">
-                          {sub.answerText || "Tidak ada jawaban teks yang dilampirkan."}
+                        <div className="mt-1.5 rounded-xl border border-gray-100 bg-gray-50/70 p-4 text-xs leading-relaxed text-gray-700">
+                          <HtmlContent content={sub.answerText || "Tidak ada jawaban teks yang dilampirkan."} fallback="Tidak ada jawaban teks yang dilampirkan." />
                         </div>
                       </div>
                     )}

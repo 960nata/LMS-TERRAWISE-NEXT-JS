@@ -250,3 +250,5 @@ export function StatRows({ rows }: { rows: [string, number, string][] }) {
 }
 
 export { ActionModal } from "./ui/Modal";
+export { HtmlContent } from "./ui/HtmlContent";
+export { RichTextEditor } from "./ui/RichTextEditor";
