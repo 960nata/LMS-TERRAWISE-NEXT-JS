@@ -44,4 +44,8 @@ export async function submitAttempt(ujianId: string, formData: FormData) {
   revalidatePath("/student/ujian");
   revalidatePath("/teacher/ujian");
   revalidatePath(`/teacher/ujian/${ujianId}`);
+  revalidatePath("/admin/ujian");
+  revalidatePath(`/admin/ujian/${ujianId}`);
+  revalidatePath("/superadmin/ujian");
+  revalidatePath(`/superadmin/ujian/${ujianId}`);
 }

@@ -2,7 +2,15 @@
 
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { users } from "@/lib/db/schema";
+import {
+  users,
+  kelas,
+  enrollments,
+  tugasSubmissions,
+  ujianAttempts,
+  notifications,
+  complaints,
+} from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
@@ -68,6 +76,21 @@ export async function deleteUser(form: FormData) {
     .where(eq(users.id, id))
     .limit(1);
   if (!target || target.role === "SUPERADMIN") throw new Error("Superadmin tidak dapat dihapus");
+
+  if (target.role === "TEACHER") {
+    const [ownedClass] = await db.select({ id: kelas.id }).from(kelas).where(eq(kelas.teacherId, id)).limit(1);
+    if (ownedClass) {
+      throw new Error("Guru masih memiliki kelas yang diampu. Hapus atau pindahkan pengampu kelas terlebih dahulu.");
+    }
+  }
+
+  // Cleanup dependent records safely
+  await db.delete(enrollments).where(eq(enrollments.studentId, id));
+  await db.delete(tugasSubmissions).where(eq(tugasSubmissions.studentId, id));
+  await db.delete(ujianAttempts).where(eq(ujianAttempts.studentId, id));
+  await db.delete(notifications).where(eq(notifications.userId, id));
+  await db.delete(complaints).where(eq(complaints.userId, id));
+
   await db.delete(users).where(eq(users.id, id));
   revalidatePath("/superadmin/pengguna");
   revalidatePath("/admin/pengguna");

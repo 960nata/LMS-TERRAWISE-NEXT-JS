@@ -211,4 +211,9 @@ export async function gradeExamAttempt(formData: FormData) {
   revalidatePath(`/teacher/ujian/${attempt.ujianId}`);
   revalidatePath(`/admin/ujian/${attempt.ujianId}`);
   revalidatePath(`/superadmin/ujian/${attempt.ujianId}`);
+  revalidatePath(`/student/ujian/${attempt.ujianId}`);
+  revalidatePath("/student/ujian");
+  revalidatePath("/teacher/ujian");
+  revalidatePath("/admin/ujian");
+  revalidatePath("/superadmin/ujian");
 }

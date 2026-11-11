@@ -312,8 +312,12 @@ export function ExamCreateWizard({
 
     try {
       await formAction(formData);
-    } catch (err) {
-      console.error(err);
+    } catch (err: unknown) {
+      const e = err as { digest?: string; message?: string };
+      if (e?.digest?.startsWith("NEXT_REDIRECT") || e?.message === "NEXT_REDIRECT") {
+        throw err;
+      }
+      console.error("Exam submission error:", err);
       setSubmitting(false);
     }
   };

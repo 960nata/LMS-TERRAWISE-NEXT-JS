@@ -117,4 +117,8 @@ export async function submitTugasQuestions(tugasId: string, formData: FormData) 
   revalidatePath("/student/tugas");
   revalidatePath("/teacher/tugas");
   revalidatePath(`/teacher/tugas/${tugasId}`);
+  revalidatePath(`/admin/tugas/${tugasId}`);
+  revalidatePath(`/superadmin/tugas/${tugasId}`);
+  revalidatePath("/admin/tugas");
+  revalidatePath("/superadmin/tugas");
 }

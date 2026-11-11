@@ -1,6 +1,6 @@
 "use server";
 import { db } from "@/lib/db";
-import { enrollments, kelas, users } from "@/lib/db/schema";
+import { enrollments, kelas, users, materi, tugas, tugasSoal, tugasSubmissions, ujian, soal, ujianAttempts } from "@/lib/db/schema";
 import { requireUser } from "@/lib/access";
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -85,10 +85,36 @@ export async function updateClass(form: FormData) {
 export async function deleteClass(form: FormData) {
   await requireUser(["SUPERADMIN", "ADMIN"]);
   const id = z.string().min(1).parse(form.get("id"));
+
+  // 1. Delete ujian and its children
+  const classUjianList = await db.select({ id: ujian.id }).from(ujian).where(eq(ujian.kelasId, id));
+  for (const u of classUjianList) {
+    await db.delete(ujianAttempts).where(eq(ujianAttempts.ujianId, u.id));
+    await db.delete(soal).where(eq(soal.ujianId, u.id));
+  }
+  await db.delete(ujian).where(eq(ujian.kelasId, id));
+
+  // 2. Delete tugas and its children
+  const classTugasList = await db.select({ id: tugas.id }).from(tugas).where(eq(tugas.kelasId, id));
+  for (const t of classTugasList) {
+    await db.delete(tugasSubmissions).where(eq(tugasSubmissions.tugasId, t.id));
+    await db.delete(tugasSoal).where(eq(tugasSoal.tugasId, t.id));
+  }
+  await db.delete(tugas).where(eq(tugas.kelasId, id));
+
+  // 3. Delete materi
+  await db.delete(materi).where(eq(materi.kelasId, id));
+
+  // 4. Delete enrollments
   await db.delete(enrollments).where(eq(enrollments.kelasId, id));
+
+  // 5. Delete class
   await db.delete(kelas).where(eq(kelas.id, id));
+
   revalidatePath("/superadmin/kelas");
   revalidatePath("/admin/kelas");
   revalidatePath("/superadmin");
   revalidatePath("/admin");
+  revalidatePath("/teacher");
+  revalidatePath("/student");
 }

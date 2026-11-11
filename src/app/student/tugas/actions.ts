@@ -37,4 +37,9 @@ export async function submitTugas(formData: FormData) {
   revalidatePath("/student/tugas");
   revalidatePath(`/student/tugas/${tugasId}`);
   revalidatePath("/teacher/tugas");
+  revalidatePath(`/teacher/tugas/${tugasId}`);
+  revalidatePath("/admin/tugas");
+  revalidatePath(`/admin/tugas/${tugasId}`);
+  revalidatePath("/superadmin/tugas");
+  revalidatePath(`/superadmin/tugas/${tugasId}`);
 }
