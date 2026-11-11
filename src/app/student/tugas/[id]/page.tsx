@@ -38,6 +38,18 @@ export default async function StudentTugasDetailPage({ params }: { params: Promi
     .where(eq(tugasSoal.tugasId, id))
     .orderBy(asc(tugasSoal.order), asc(tugasSoal.id));
 
+  const groupConfigSoal = soalList.find((s) => s.question === "__GROUP_CONFIG__");
+  const groupConfig = groupConfigSoal?.options as
+    | {
+        groups?: Array<{ id: string; name: string; leader?: string; members?: string; topic?: string }>;
+        enablePeerAssessment?: boolean;
+        scaleItems?: Array<{ id: string; label: string; points: number }>;
+        criteria?: string[];
+      }
+    | undefined;
+
+  const actualSoalList = soalList.filter((s) => s.question !== "__GROUP_CONFIG__");
+
   const [existing] = await db
     .select()
     .from(tugasSubmissions)
@@ -66,7 +78,10 @@ export default async function StudentTugasDetailPage({ params }: { params: Promi
 
   // Jika sudah dikerjakan / disubmit
   if (existing?.submittedAt) {
-    const studentAnswers = (existing.answers as Record<string, string>) || {};
+    const studentAnswers = (existing.answers as Record<string, unknown>) || {};
+    const peerEval = studentAnswers.peerEvaluation as
+      | { targetGroup?: string; rating?: string; points?: number; comment?: string }
+      | undefined;
     return (
       <>
         {backLink}
@@ -168,9 +183,26 @@ export default async function StudentTugasDetailPage({ params }: { params: Promi
                   </a>
                 </div>
               )}
+
+              {peerEval && (
+                <div className="rounded-xl border border-gray-200 bg-neutral-50/70 p-4 space-y-2 pt-3 border-t">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                      Evaluasi Sejawat (Peer Assessment) yang Dikirimkan
+                    </span>
+                    <Badge tone="black">Terekam</Badge>
+                  </div>
+                  <p className="text-xs font-bold text-black">
+                    Kelompok Dinilai: <span className="underline">{peerEval.targetGroup}</span> · Penilaian: {peerEval.rating} {peerEval.points != null && `(${peerEval.points} Poin)`}
+                  </p>
+                  {peerEval.comment && (
+                    <p className="text-xs text-gray-600 italic">&ldquo;{peerEval.comment}&rdquo;</p>
+                  )}
+                </div>
+              )}
             </div>
           ) : (
-            soalList.map((s, idx) => {
+            actualSoalList.map((s, idx) => {
               const options = (s.options as string[]) ?? [];
               const ans = studentAnswers[s.id];
               const isCorrect = s.type === "MULTIPLE_CHOICE" && ans === s.correctAnswer;
@@ -216,7 +248,7 @@ export default async function StudentTugasDetailPage({ params }: { params: Promi
                   ) : (
                     <div className="p-3 bg-gray-50 rounded-lg text-xs mt-2 border border-gray-100">
                       <span className="font-bold text-gray-500 block mb-1">Jawaban yang kamu kumpulkan:</span>
-                      <HtmlContent content={ans || "-"} className="text-gray-800 leading-relaxed" />
+                      <HtmlContent content={(ans as string) || "-"} className="text-gray-800 leading-relaxed" />
                     </div>
                   )}
                 </div>
@@ -289,20 +321,54 @@ export default async function StudentTugasDetailPage({ params }: { params: Promi
             </div>
           </div>
         ) : t.tipe === "KELOMPOK" ? (
-          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-5">
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-6">
             <h3 className="font-bold text-sm tracking-tight text-black flex items-center gap-2">
               <Icon name="groups" size={18} /> Pengumpulan Proyek Kelompok
             </h3>
+
+            {/* Jika ada kelompok yang telah dibagi oleh guru */}
+            {groupConfig?.groups && groupConfig.groups.length > 0 && (
+              <div className="rounded-xl border border-gray-200 bg-neutral-50/70 p-4 space-y-3">
+                <span className="text-[10px] font-black uppercase tracking-wider text-gray-500 block">
+                  Daftar Kelompok yang Ditetapkan Pengajar:
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {groupConfig.groups.map((grp, idx) => (
+                    <div key={grp.id || idx} className="rounded-lg border border-gray-200 bg-white p-3 text-xs">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-bold text-black">{grp.name}</span>
+                        {grp.leader && (
+                          <span className="text-[10px] bg-black text-white px-1.5 py-0.5 rounded font-bold">
+                            Ketua: {grp.leader}
+                          </span>
+                        )}
+                      </div>
+                      {grp.topic && <p className="text-[11px] text-gray-600 mb-1">Topik: {grp.topic}</p>}
+                      {grp.members && <p className="text-[10px] text-gray-400">Anggota: {grp.members}</p>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="groupName">Nama Kelompok</Label>
                 <input
                   id="groupName"
                   name="groupName"
+                  list="groupNamesList"
                   required
                   placeholder="cth: Kelompok 1 - BioTeknologi"
                   className={inputClass}
                 />
+                {groupConfig?.groups && groupConfig.groups.length > 0 && (
+                  <datalist id="groupNamesList">
+                    {groupConfig.groups.map((grp, idx) => (
+                      <option key={grp.id || idx} value={grp.name} />
+                    ))}
+                  </datalist>
+                )}
               </div>
               <div>
                 <Label htmlFor="groupMembers">Daftar Anggota Tim</Label>
@@ -315,6 +381,7 @@ export default async function StudentTugasDetailPage({ params }: { params: Promi
                 />
               </div>
             </div>
+
             <div>
               <Label htmlFor="answerText">Ringkasan Laporan Proyek / Hasil Kolaborasi</Label>
               <textarea
@@ -326,6 +393,7 @@ export default async function StudentTugasDetailPage({ params }: { params: Promi
                 className={inputClass}
               />
             </div>
+
             <div>
               <Label htmlFor="fileUrl">Tautan Repository / Berkas Laporan Tim (Google Drive / GitHub)</Label>
               <input
@@ -337,6 +405,81 @@ export default async function StudentTugasDetailPage({ params }: { params: Promi
                 className={inputClass}
               />
             </div>
+
+            {/* Form Evaluasi Sejawat (Peer Assessment) jika diaktifkan */}
+            {groupConfig?.enablePeerAssessment && (
+              <div className="rounded-xl border-2 border-black bg-neutral-50 p-5 space-y-4 pt-4 border-t">
+                <div className="flex items-center justify-between border-b border-gray-200 pb-2">
+                  <div className="flex items-center gap-2">
+                    <Icon name="star" size={18} />
+                    <h4 className="text-xs font-black uppercase tracking-wider text-black">
+                      Form Evaluasi Sejawat (Peer Assessment)
+                    </h4>
+                  </div>
+                  <Badge tone="black">Evaluasi Tim Lain</Badge>
+                </div>
+                <p className="text-[11px] text-gray-500">
+                  Sebagai bagian dari pembelajaran kolaboratif, berikan evaluasi objektif terhadap kelompok lain:
+                </p>
+
+                <div>
+                  <Label htmlFor="peerTargetGroup">Pilih Kelompok Rekan yang Anda Nilai</Label>
+                  <input
+                    id="peerTargetGroup"
+                    name="peerTargetGroup"
+                    list="peerGroupsList"
+                    placeholder="Ketik atau pilih nama kelompok lain (cth: Kelompok 2)"
+                    className={inputClass}
+                  />
+                  {groupConfig?.groups && (
+                    <datalist id="peerGroupsList">
+                      {groupConfig.groups.map((grp, idx) => (
+                        <option key={grp.id || idx} value={grp.name} />
+                      ))}
+                    </datalist>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="peerRating">Skala Penilaian Kinerja Tim Rekan</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mt-1.5">
+                    {(groupConfig.scaleItems || [
+                      { id: "1", label: "Tidak Memenuhi", points: 0 },
+                      { id: "2", label: "Kurang Baik", points: 1 },
+                      { id: "3", label: "Cukup Baik", points: 2 },
+                      { id: "4", label: "Baik & Solid", points: 3 },
+                      { id: "5", label: "Sangat Baik & Luar Biasa", points: 4 },
+                    ]).map((scale) => (
+                      <label
+                        key={scale.id}
+                        className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white p-2.5 cursor-pointer hover:border-black text-xs"
+                      >
+                        <input
+                          type="radio"
+                          name="peerRating"
+                          value={scale.label}
+                          className="text-black focus:ring-black accent-black"
+                        />
+                        <span className="font-bold text-black">{scale.label}</span>
+                        <span className="text-[10px] text-gray-400 ml-auto">({scale.points} Poin)</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="peerComment">Komentar &amp; Umpan Balik Konstruktif</Label>
+                  <textarea
+                    id="peerComment"
+                    name="peerComment"
+                    rows={2}
+                    placeholder="Tuliskan masukan positif atau apresiasi untuk kelompok yang dinilai..."
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+            )}
+
             <div className="pt-2">
               <button type="submit" className={primaryButtonClass}>
                 <Icon name="send" size={16} /> Kumpulkan Tugas Kelompok
@@ -345,7 +488,7 @@ export default async function StudentTugasDetailPage({ params }: { params: Promi
           </div>
         ) : (
           <>
-            {soalList.map((s, idx) => {
+            {actualSoalList.map((s, idx) => {
               const options = (s.options as string[]) ?? [];
               return (
                 <div key={s.id} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm md:rounded-2xl">

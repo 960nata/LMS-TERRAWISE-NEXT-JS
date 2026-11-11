@@ -64,6 +64,24 @@ export async function createTugas(formData: FormData) {
     }
   }
 
+  // If groupConfig is provided for KELOMPOK
+  const groupConfigRaw = formData.get("groupConfig") as string | null;
+  if (groupConfigRaw) {
+    try {
+      const groupConfig = JSON.parse(groupConfigRaw);
+      await db.insert(tugasSoal).values({
+        tugasId: newTask.id,
+        type: "ESSAY",
+        question: "__GROUP_CONFIG__",
+        options: groupConfig,
+        points: 0,
+        order: 0,
+      });
+    } catch (err) {
+      console.error("Failed to insert groupConfig:", err);
+    }
+  }
+
   const students = await db
     .select({ studentId: enrollments.studentId })
     .from(enrollments)
@@ -93,11 +111,7 @@ export async function createTugas(formData: FormData) {
   revalidatePath("/student/tugas");
 
   const basePath = role === "SUPERADMIN" ? "/superadmin" : role === "ADMIN" ? "/admin" : "/teacher";
-  if (tipe === "MULTIPLE_CHOICE" || tipe === "ESSAY") {
-    redirect(`${basePath}/tugas/${newTask.id}`);
-  } else {
-    redirect(`${basePath}/tugas`);
-  }
+  redirect(`${basePath}/tugas/${newTask.id}`);
 }
 
 export async function addTugasSoal(tugasId: string, formData: FormData) {

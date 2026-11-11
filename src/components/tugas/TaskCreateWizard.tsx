@@ -32,7 +32,15 @@ type EssayQuestion = {
 type GroupItem = {
   id: string;
   name: string;
+  leader?: string;
   members: string;
+  topic?: string;
+};
+
+type ScaleItem = {
+  id: string;
+  label: string;
+  points: number;
 };
 
 export function TaskCreateWizard({
@@ -83,7 +91,23 @@ export function TaskCreateWizard({
 
   // Group Management State
   const [groups, setGroups] = useState<GroupItem[]>([
-    { id: "g-1", name: "Kelompok 1", members: "" },
+    { id: "g-1", name: "Kelompok 1", leader: "", members: "", topic: "" },
+    { id: "g-2", name: "Kelompok 2", leader: "", members: "", topic: "" },
+  ]);
+
+  // Peer Assessment State
+  const [enablePeerAssessment, setEnablePeerAssessment] = useState(true);
+  const [scaleItems, setScaleItems] = useState<ScaleItem[]>([
+    { id: "s-1", label: "Tidak Memenuhi", points: 0 },
+    { id: "s-2", label: "Kurang Baik", points: 1 },
+    { id: "s-3", label: "Cukup Baik", points: 2 },
+    { id: "s-4", label: "Baik & Solid", points: 3 },
+    { id: "s-5", label: "Sangat Baik & Luar Biasa", points: 4 },
+  ]);
+  const [criteria] = useState<string[]>([
+    "Kerjasama Tim & Pembagian Tugas",
+    "Kualitas Laporan & Metodologi Kerja",
+    "Komunikasi & Tanggung Jawab Anggota",
   ]);
 
   const addMcQuestion = () => {
@@ -148,7 +172,9 @@ export function TaskCreateWizard({
       {
         id: `g-${Date.now()}`,
         name: `Kelompok ${prev.length + 1}`,
+        leader: "",
         members: "",
+        topic: "",
       },
     ]);
   };
@@ -161,6 +187,27 @@ export function TaskCreateWizard({
     setGroups((prev) =>
       prev.map((g) => (g.id === id ? { ...g, [field]: val } : g))
     );
+  };
+
+  const updateScaleItem = (id: string, field: keyof ScaleItem, val: string | number) => {
+    setScaleItems((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, [field]: val } : s))
+    );
+  };
+
+  const addScaleItem = () => {
+    setScaleItems((prev) => [
+      ...prev,
+      {
+        id: `s-${Date.now()}`,
+        label: `Skala Baru ${prev.length + 1}`,
+        points: prev.length,
+      },
+    ]);
+  };
+
+  const removeScaleItem = (id: string) => {
+    setScaleItems((prev) => prev.filter((s) => s.id !== id));
   };
 
   // STEP 1: Type Selection Screen
@@ -363,11 +410,21 @@ export function TaskCreateWizard({
     const form = e.currentTarget;
     const formData = new FormData(form);
 
-    // Package questionsData
+    // Package questionsData & groupConfig
     if (selectedType === "MULTIPLE_CHOICE") {
       formData.set("questionsData", JSON.stringify(mcQuestions));
     } else if (selectedType === "ESSAY") {
       formData.set("questionsData", JSON.stringify(essayQuestions));
+    } else if (selectedType === "KELOMPOK") {
+      formData.set(
+        "groupConfig",
+        JSON.stringify({
+          groups,
+          enablePeerAssessment,
+          scaleItems,
+          criteria,
+        })
+      );
     }
 
     try {
@@ -789,70 +846,228 @@ export function TaskCreateWizard({
 
         {/* Section 2: KELOMPOK OPTIONS */}
         {selectedType === "KELOMPOK" && (
-          <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-gray-200 pb-4">
-              <div>
-                <h2 className="text-lg font-black uppercase tracking-tight text-black flex items-center gap-2">
-                  <Icon name="groups" size={20} /> Pembagian Kelompok &amp; Anggota Tim
-                </h2>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  Tentukan kelompok kerja atau biarkan siswa membentuk tim kolaborasi mandiri.
-                </p>
+          <div className="space-y-8">
+            {/* Bagian 1: Pembagian Kelompok */}
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-gray-200 pb-4">
+                <div>
+                  <h2 className="text-lg font-black uppercase tracking-tight text-black flex items-center gap-2">
+                    <Icon name="groups" size={20} /> Pembagian Kelompok &amp; Anggota Tim
+                  </h2>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Buat daftar kelompok kerja proyek, tetapkan ketua, serta daftar anggota siswa per tim.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={addGroup}
+                  className="inline-flex items-center gap-2 rounded-xl bg-black px-4 py-2.5 text-xs font-extrabold uppercase text-white hover:bg-neutral-800 transition-colors shadow-sm"
+                >
+                  <Icon name="group_add" size={18} /> + Tambah Kelompok
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={addGroup}
-                className="inline-flex items-center gap-2 rounded-xl bg-black px-4 py-2.5 text-xs font-extrabold uppercase text-white hover:bg-neutral-800 transition-colors shadow-sm"
-              >
-                <Icon name="group_add" size={18} /> + Tambah Kelompok
-              </button>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {groups.map((g, idx) => (
+                  <div
+                    key={g.id}
+                    className="rounded-3xl border-2 border-black bg-white p-5 space-y-4 shadow-sm"
+                  >
+                    <div className="flex items-center justify-between border-b border-gray-100 pb-2.5">
+                      <div className="flex items-center gap-2">
+                        <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-black text-xs font-black text-white">
+                          #{idx + 1}
+                        </span>
+                        <h4 className="text-xs font-black uppercase tracking-wider text-black">
+                          {g.name || `Kelompok ${idx + 1}`}
+                        </h4>
+                      </div>
+                      {groups.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeGroup(g.id)}
+                          className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:border-red-600 hover:text-red-600 transition-colors"
+                          title="Hapus Kelompok"
+                        >
+                          <Icon name="delete" size={15} />
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[10px] font-black uppercase tracking-wider text-gray-500">
+                          Nama Kelompok <span className="text-black">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={g.name}
+                          onChange={(e) => updateGroup(g.id, "name", e.target.value)}
+                          placeholder="cth: Kelompok 1 - Inovasi Hijau"
+                          required
+                          className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2 text-xs font-bold text-black focus:border-black focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-black uppercase tracking-wider text-gray-500">
+                          Ketua Kelompok (Opsional)
+                        </label>
+                        <input
+                          type="text"
+                          value={g.leader || ""}
+                          onChange={(e) => updateGroup(g.id, "leader", e.target.value)}
+                          placeholder="Nama ketua kelompok"
+                          className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2 text-xs font-medium text-black focus:border-black focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-black uppercase tracking-wider text-gray-500">
+                        Topik / Fokus Proyek Tim (Opsional)
+                      </label>
+                      <input
+                        type="text"
+                        value={g.topic || ""}
+                        onChange={(e) => updateGroup(g.id, "topic", e.target.value)}
+                        placeholder="cth: Perancangan Sistem Pemilahan Sampah Otomatis"
+                        className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2 text-xs font-medium text-black focus:border-black focus:outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-black uppercase tracking-wider text-gray-500">
+                        Daftar Anggota Tim (Pisahkan dengan koma)
+                      </label>
+                      <input
+                        type="text"
+                        value={g.members}
+                        onChange={(e) => updateGroup(g.id, "members", e.target.value)}
+                        placeholder="cth: Ahmad Fauzi, Budi Prasetyo, Citra Kirana, Dika Pratama"
+                        className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2 text-xs font-medium text-black focus:border-black focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {groups.map((g, idx) => (
-                <div
-                  key={g.id}
-                  className="rounded-2xl border border-black bg-white p-5 space-y-3"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-black text-[11px] font-black text-white">
-                      {idx + 1}
-                    </span>
-                    {groups.length > 1 && (
+            {/* Bagian 2: Pengaturan Evaluasi Sejawat (Peer Assessment) */}
+            <div className="rounded-3xl border-2 border-black bg-white p-6 md:p-8 space-y-6 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-4">
+                <div>
+                  <h3 className="text-sm font-black uppercase tracking-wider text-black flex items-center gap-2">
+                    <Icon name="star" size={20} /> Pengaturan Evaluasi Sejawat (Peer Assessment)
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Aktifkan penilaian antar kelompok agar siswa dapat mengevaluasi kinerja kelompok lain secara objektif.
+                  </p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={enablePeerAssessment}
+                    onChange={(e) => setEnablePeerAssessment(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-black"></div>
+                  <span className="ml-3 text-xs font-black uppercase tracking-wider text-black">
+                    {enablePeerAssessment ? "Aktif" : "Nonaktif"}
+                  </span>
+                </label>
+              </div>
+
+              {enablePeerAssessment && (
+                <div className="space-y-6">
+                  {/* Skala Penilaian */}
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <h4 className="text-xs font-black uppercase tracking-wider text-black">
+                          Skala Penilaian Evaluasi Sejawat
+                        </h4>
+                        <p className="text-[11px] text-gray-500">
+                          Setiap kelompok penilai akan memilih skala poin berikut saat menilai kelompok lain:
+                        </p>
+                      </div>
                       <button
                         type="button"
-                        onClick={() => removeGroup(g.id)}
-                        className="text-gray-400 hover:text-red-600 transition-colors"
+                        onClick={addScaleItem}
+                        className="text-xs font-bold text-black hover:underline"
                       >
-                        <Icon name="delete" size={16} />
+                        + Tambah Skala
                       </button>
-                    )}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                      {scaleItems.map((s, sIdx) => (
+                        <div
+                          key={s.id}
+                          className="rounded-2xl border border-gray-200 bg-neutral-50/70 p-3.5 space-y-2"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-black uppercase text-gray-400">
+                              Skala {sIdx + 1}
+                            </span>
+                            {scaleItems.length > 2 && (
+                              <button
+                                type="button"
+                                onClick={() => removeScaleItem(s.id)}
+                                className="text-gray-400 hover:text-red-600 transition-colors"
+                              >
+                                <Icon name="delete" size={14} />
+                              </button>
+                            )}
+                          </div>
+                          <div>
+                            <label className="text-[9px] font-black uppercase tracking-wider text-gray-400">
+                              Label Skala
+                            </label>
+                            <input
+                              type="text"
+                              value={s.label}
+                              onChange={(e) => updateScaleItem(s.id, "label", e.target.value)}
+                              className="w-full rounded-lg border border-gray-300 px-2.5 py-1.5 text-xs font-bold text-black focus:border-black focus:outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[9px] font-black uppercase tracking-wider text-gray-400">
+                              Bobot Poin
+                            </label>
+                            <input
+                              type="number"
+                              value={s.points}
+                              onChange={(e) => updateScaleItem(s.id, "points", Number(e.target.value))}
+                              min={0}
+                              className="w-full rounded-lg border border-gray-300 px-2.5 py-1.5 text-xs font-bold text-black focus:border-black focus:outline-none"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
+
+                  {/* Kriteria Rubrik */}
                   <div>
-                    <label className="text-[10px] font-black uppercase tracking-wider text-gray-500">
-                      Nama Kelompok
-                    </label>
-                    <input
-                      type="text"
-                      value={g.name}
-                      onChange={(e) => updateGroup(g.id, "name", e.target.value)}
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs font-bold text-black focus:border-black focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black uppercase tracking-wider text-gray-500">
-                      Daftar Anggota Tim (Opsional / Siswa dapat mengisi)
-                    </label>
-                    <input
-                      type="text"
-                      value={g.members}
-                      onChange={(e) => updateGroup(g.id, "members", e.target.value)}
-                      placeholder="cth: Ahmad, Budi, Citra"
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-black focus:border-black focus:outline-none"
-                    />
+                    <h4 className="text-xs font-black uppercase tracking-wider text-black mb-2">
+                      Kriteria Rubrik Evaluasi Tim Sejawat
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      {criteria.map((c, cIdx) => (
+                        <div
+                          key={cIdx}
+                          className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white p-3 text-xs"
+                        >
+                          <span className="flex h-5 w-5 items-center justify-center rounded bg-black text-[10px] font-bold text-white">
+                            {cIdx + 1}
+                          </span>
+                          <span className="font-bold text-black">{c}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         )}

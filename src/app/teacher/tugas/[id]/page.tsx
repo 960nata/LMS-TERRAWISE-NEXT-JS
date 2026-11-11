@@ -73,8 +73,20 @@ export default async function TugasDetailPage({ params }: { params: Promise<{ id
       .orderBy(desc(tugasSubmissions.submittedAt)),
   ]);
 
+  const groupConfigSoal = soalList.find((s) => s.question === "__GROUP_CONFIG__");
+  const groupConfig = groupConfigSoal?.options as
+    | {
+        groups?: Array<{ id: string; name: string; leader?: string; members?: string; topic?: string }>;
+        enablePeerAssessment?: boolean;
+        scaleItems?: Array<{ id: string; label: string; points: number }>;
+        criteria?: string[];
+      }
+    | undefined;
+
+  const actualSoalList = soalList.filter((s) => s.question !== "__GROUP_CONFIG__");
+
   const addSoalBound = addTugasSoal.bind(null, id);
-  const totalPoin = soalList.reduce((acc, s) => acc + s.points, 0);
+  const totalPoin = actualSoalList.reduce((acc, s) => acc + s.points, 0);
 
   const tipeLabel =
     t.tipe === "MULTIPLE_CHOICE"
@@ -197,14 +209,87 @@ export default async function TugasDetailPage({ params }: { params: Promise<{ id
         <HtmlContent content={t.description} className="mt-2 text-sm leading-relaxed text-gray-700" />
       </div>
 
+      {/* Daftar Kelompok & Peer Assessment jika tipe KELOMPOK */}
+      {t.tipe === "KELOMPOK" && (
+        <section className="mt-6 space-y-4">
+          <div className="rounded-2xl border border-black bg-white p-6 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 pb-4 mb-4">
+              <div className="flex items-center gap-2">
+                <Icon name="groups" size={22} />
+                <h3 className="text-base font-black uppercase tracking-tight text-black">
+                  Daftar Kelompok &amp; Anggota Tim
+                </h3>
+              </div>
+              {groupConfig?.enablePeerAssessment ? (
+                <Badge tone="green">Evaluasi Sejawat Aktif (Peer Assessment Enabled)</Badge>
+              ) : (
+                <Badge tone="gray">Evaluasi Sejawat Nonaktif</Badge>
+              )}
+            </div>
+
+            {groupConfig?.groups && groupConfig.groups.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {groupConfig.groups.map((grp, idx) => (
+                  <div key={grp.id || idx} className="rounded-xl border border-gray-200 bg-neutral-50 p-4 space-y-1.5 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-black text-sm">{grp.name}</span>
+                      <span className="text-[10px] bg-black text-white px-2 py-0.5 rounded font-bold">
+                        Tim #{idx + 1}
+                      </span>
+                    </div>
+                    {grp.leader && (
+                      <p className="text-[11px] text-gray-700">
+                        <span className="font-bold">Ketua:</span> {grp.leader}
+                      </p>
+                    )}
+                    {grp.topic && (
+                      <p className="text-[11px] text-gray-700">
+                        <span className="font-bold">Topik:</span> {grp.topic}
+                      </p>
+                    )}
+                    {grp.members && (
+                      <p className="text-[10px] text-gray-500">
+                        <span className="font-bold text-gray-600">Anggota:</span> {grp.members}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-gray-500">
+                Siswa dapat membentuk tim dan menginput nama kelompok secara mandiri saat mengumpulkan tugas.
+              </p>
+            )}
+
+            {groupConfig?.enablePeerAssessment && groupConfig.scaleItems && (
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <span className="text-[10px] font-black uppercase tracking-wider text-gray-400 block mb-2">
+                  Skala Penilaian Evaluasi Sejawat:
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {groupConfig.scaleItems.map((scale) => (
+                    <span
+                      key={scale.id}
+                      className="rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs font-bold text-black"
+                    >
+                      {scale.label} ({scale.points} Poin)
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
       {/* Daftar Soal jika tipe MULTIPLE_CHOICE atau ESSAY */}
       {isQuestionBased && (
         <section className="mt-8">
           <SectionTitle
             icon="quiz"
-            title={`Bank Soal ${t.tipe === "MULTIPLE_CHOICE" ? "Pilihan Ganda" : "Essay"} (${soalList.length} Soal)`}
+            title={`Bank Soal ${t.tipe === "MULTIPLE_CHOICE" ? "Pilihan Ganda" : "Essay"} (${actualSoalList.length} Soal)`}
           />
-          {soalList.length === 0 ? (
+          {actualSoalList.length === 0 ? (
             <div className="rounded-2xl border-2 border-dashed border-gray-300 bg-white p-8 text-center md:p-12">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-black text-white">
                 <Icon name="quiz" size={28} />
@@ -293,7 +378,7 @@ export default async function TugasDetailPage({ params }: { params: Promise<{ id
             </div>
           ) : (
             <div className="space-y-4">
-              {soalList.map((s, idx) => {
+              {actualSoalList.map((s, idx) => {
                 const options = (s.options as string[]) ?? [];
                 const deleteAction = deleteTugasSoal.bind(null, id, s.id);
                 return (
@@ -371,7 +456,10 @@ export default async function TugasDetailPage({ params }: { params: Promise<{ id
         ) : (
           <div className="space-y-4">
             {submissions.map((sub) => {
-              const studentAnswers = (sub.answers as Record<string, string>) || {};
+              const studentAnswers = (sub.answers as Record<string, unknown>) || {};
+              const peerEval = studentAnswers.peerEvaluation as
+                | { targetGroup?: string; rating?: string; points?: number; comment?: string }
+                | undefined;
               return (
                 <div
                   key={sub.id}
@@ -408,11 +496,11 @@ export default async function TugasDetailPage({ params }: { params: Promise<{ id
 
                   {/* Jawaban berdasarkan tipe */}
                   <div className="mt-4">
-                    {t.tipe === "MULTIPLE_CHOICE" && soalList.length > 0 ? (
+                    {t.tipe === "MULTIPLE_CHOICE" && actualSoalList.length > 0 ? (
                       <div className="space-y-2">
                         <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">Jawaban Kuis Pilihan Ganda Siswa:</p>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                          {soalList.map((s, idx) => {
+                          {actualSoalList.map((s, idx) => {
                             const ans = studentAnswers[s.id];
                             const isCorrect = ans === s.correctAnswer;
                             return (
@@ -422,7 +510,7 @@ export default async function TugasDetailPage({ params }: { params: Promise<{ id
                                   isCorrect ? "border-green-300 bg-green-50/50" : "border-red-200 bg-red-50/50"
                                 }`}
                               >
-                                <span className="font-bold">No. {idx + 1}: Opsi {ans ?? "-"}</span>
+                                <span className="font-bold">No. {idx + 1}: Opsi {String(ans ?? "-")}</span>
                                 <span className="text-[10px] font-bold">
                                   {isCorrect ? `+${s.points} Poin` : "0 Poin"}
                                 </span>
@@ -431,17 +519,17 @@ export default async function TugasDetailPage({ params }: { params: Promise<{ id
                           })}
                         </div>
                       </div>
-                    ) : t.tipe === "ESSAY" && soalList.length > 0 ? (
+                    ) : t.tipe === "ESSAY" && actualSoalList.length > 0 ? (
                       <div className="space-y-3">
                         <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">Jawaban Uraian Essay Siswa:</p>
-                        {soalList.map((s, idx) => (
+                        {actualSoalList.map((s, idx) => (
                           <div key={s.id} className="p-3.5 rounded-xl border border-gray-100 bg-gray-50 text-xs">
                             <div className="font-bold text-black mb-1.5 flex items-start gap-1.5">
                               <span>Soal {idx + 1} ({s.points} Poin):</span>
                               <HtmlContent content={s.question} className="inline-block flex-1" />
                             </div>
                             <div className="text-gray-700 leading-relaxed border-t border-gray-200/60 pt-2 mt-1">
-                              <HtmlContent content={studentAnswers[s.id] || "Belum ada jawaban."} />
+                              <HtmlContent content={(studentAnswers[s.id] as string) || "Belum ada jawaban."} />
                             </div>
                           </div>
                         ))}
@@ -466,6 +554,25 @@ export default async function TugasDetailPage({ params }: { params: Promise<{ id
                         >
                           {sub.fileUrl} ↗
                         </a>
+                      </div>
+                    )}
+
+                    {peerEval && (
+                      <div className="mt-3 p-3 bg-neutral-50 border border-gray-200 rounded-xl text-xs space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-black flex items-center gap-1.5">
+                            <Icon name="star" size={14} /> Evaluasi Sejawat (Peer Assessment) yang Diberikan Siswa:
+                          </span>
+                          <span className="font-black text-[10px] bg-black text-white px-2 py-0.5 rounded">
+                            {peerEval.rating} {peerEval.points != null && `(${peerEval.points} Poin)`}
+                          </span>
+                        </div>
+                        <p className="text-gray-700">
+                          Menilai Kelompok: <span className="font-bold text-black">{peerEval.targetGroup}</span>
+                        </p>
+                        {peerEval.comment && (
+                          <p className="text-gray-500 italic">Catatan Evaluasi: &ldquo;{peerEval.comment}&rdquo;</p>
+                        )}
                       </div>
                     )}
                   </div>

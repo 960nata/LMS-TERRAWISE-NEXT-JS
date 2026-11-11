@@ -40,6 +40,23 @@ export async function submitTugasQuestions(tugasId: string, formData: FormData) 
     const answerText = (formData.get("answerText") as string)?.trim() ?? "";
     const fileUrl = (formData.get("fileUrl") as string)?.trim() || null;
 
+    // Optional Peer Assessment data
+    const peerTargetGroup = (formData.get("peerTargetGroup") as string)?.trim();
+    const peerRating = (formData.get("peerRating") as string)?.trim();
+    const peerPoints = formData.get("peerPoints") ? Number(formData.get("peerPoints")) : null;
+    const peerComment = (formData.get("peerComment") as string)?.trim();
+
+    const answersData = peerTargetGroup
+      ? {
+          peerEvaluation: {
+            targetGroup: peerTargetGroup,
+            rating: peerRating,
+            points: peerPoints,
+            comment: peerComment,
+          },
+        }
+      : undefined;
+
     await db.insert(tugasSubmissions).values({
       tugasId,
       studentId,
@@ -47,6 +64,7 @@ export async function submitTugasQuestions(tugasId: string, formData: FormData) 
       groupMembers,
       answerText,
       fileUrl,
+      answers: answersData,
       score: null,
       submittedAt: new Date(),
     });
