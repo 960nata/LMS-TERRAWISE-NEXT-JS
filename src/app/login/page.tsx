@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 const FEATURES = [
@@ -60,7 +59,6 @@ const PILLARS = [
 ];
 
 export default function LoginPage() {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isRegister, setIsRegister] = useState(false);
   const [name, setName] = useState("");
@@ -130,14 +128,30 @@ export default function LoginPage() {
         setError("Email atau kata sandi tidak cocok.");
         setLoading(false);
       } else {
-        router.refresh();
+        let targetRole = role;
+        try {
+          const sessRes = await fetch("/api/auth/session");
+          const sess = await sessRes.json();
+          if (sess?.user?.role) {
+            targetRole = sess.user.role;
+          }
+        } catch {
+          // fallback
+        }
+        if (!targetRole || targetRole === "STUDENT") {
+          const lower = email.toLowerCase();
+          if (lower.includes("superadmin")) targetRole = "SUPERADMIN";
+          else if (lower.includes("admin")) targetRole = "ADMIN";
+          else if (lower.includes("guru")) targetRole = "TEACHER";
+        }
         const roleRedirects: Record<string, string> = {
           SUPERADMIN: "/superadmin",
           ADMIN: "/admin",
           TEACHER: "/teacher",
           STUDENT: "/student",
         };
-        router.push(roleRedirects[role] || "/student");
+        const dest = roleRedirects[targetRole] || "/student";
+        window.location.href = dest;
       }
     } catch {
       setError("Terjadi kesalahan jaringan.");
@@ -440,7 +454,15 @@ export default function LoginPage() {
                   type="email"
                   required
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setEmail(val);
+                    const lower = val.toLowerCase();
+                    if (lower.includes("guru")) setRole("TEACHER");
+                    else if (lower.includes("superadmin")) setRole("SUPERADMIN");
+                    else if (lower.includes("admin")) setRole("ADMIN");
+                    else if (lower.includes("siswa")) setRole("STUDENT");
+                  }}
                   placeholder="name@terrawise.id"
                   className="h-11 w-full rounded-lg border border-[#e7ebf3] bg-white px-3.5 text-sm text-black outline-none transition-all placeholder:text-gray-300 focus:border-black focus:ring-1 focus:ring-black"
                 />

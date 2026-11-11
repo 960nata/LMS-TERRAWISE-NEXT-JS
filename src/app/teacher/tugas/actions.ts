@@ -180,7 +180,7 @@ export async function deleteTugasSoal(tugasId: string, soalId: string) {
 
 export async function gradeSubmission(submissionId: string, score: number, feedback: string) {
   const [entry] = await db
-    .select({ kelasId: tugas.kelasId, maxScore: tugas.maxScore })
+    .select({ kelasId: tugas.kelasId, maxScore: tugas.maxScore, tugasId: tugas.id })
     .from(tugasSubmissions)
     .innerJoin(tugas, eq(tugasSubmissions.tugasId, tugas.id))
     .where(eq(tugasSubmissions.id, submissionId))
@@ -196,6 +196,10 @@ export async function gradeSubmission(submissionId: string, score: number, feedb
     .set({ score, feedback, gradedAt: new Date() })
     .where(eq(tugasSubmissions.id, submissionId));
 
+  revalidatePath(`/teacher/tugas/${entry.tugasId}`);
+  revalidatePath(`/admin/tugas/${entry.tugasId}`);
+  revalidatePath(`/superadmin/tugas/${entry.tugasId}`);
+  revalidatePath(`/student/tugas/${entry.tugasId}`);
   revalidatePath("/teacher/tugas");
   revalidatePath("/admin/tugas");
   revalidatePath("/superadmin/tugas");

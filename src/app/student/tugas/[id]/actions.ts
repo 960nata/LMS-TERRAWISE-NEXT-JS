@@ -42,8 +42,16 @@ export async function submitTugasQuestions(tugasId: string, formData: FormData) 
 
     // Optional Peer Assessment data
     const peerTargetGroup = (formData.get("peerTargetGroup") as string)?.trim();
-    const peerRating = (formData.get("peerRating") as string)?.trim();
-    const peerPoints = formData.get("peerPoints") ? Number(formData.get("peerPoints")) : null;
+    const rawPeerRating = (formData.get("peerRating") as string)?.trim();
+    let peerRating = rawPeerRating;
+    let peerPoints: number | null = null;
+    if (rawPeerRating && rawPeerRating.includes("|")) {
+      const [label, pts] = rawPeerRating.split("|");
+      peerRating = label;
+      peerPoints = Number(pts);
+    } else if (formData.get("peerPoints")) {
+      peerPoints = Number(formData.get("peerPoints"));
+    }
     const peerComment = (formData.get("peerComment") as string)?.trim();
 
     const answersData = peerTargetGroup
@@ -69,7 +77,8 @@ export async function submitTugasQuestions(tugasId: string, formData: FormData) 
       submittedAt: new Date(),
     });
   } else {
-    const soalList = await db.select().from(tugasSoal).where(eq(tugasSoal.tugasId, tugasId));
+    const rawSoalList = await db.select().from(tugasSoal).where(eq(tugasSoal.tugasId, tugasId));
+    const soalList = rawSoalList.filter((s) => s.question !== "__GROUP_CONFIG__");
     const answers: Record<string, string> = {};
     let rawScore = 0;
     let totalPoints = 0;

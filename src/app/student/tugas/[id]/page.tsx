@@ -457,7 +457,7 @@ export default async function StudentTugasDetailPage({ params }: { params: Promi
                         <input
                           type="radio"
                           name="peerRating"
-                          value={scale.label}
+                          value={`${scale.label}|${scale.points}`}
                           className="text-black focus:ring-black accent-black"
                         />
                         <span className="font-bold text-black">{scale.label}</span>
