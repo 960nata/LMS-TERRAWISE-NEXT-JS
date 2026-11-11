@@ -16,9 +16,10 @@ import {
 import bcrypt from "bcryptjs";
 
 async function main() {
-  console.log("🌱 Menjalankan Seeding Terrawise.id LMS murni (4 Tipe Tugas & 3 Tipe Ujian)...");
+  console.log("🌱 Menjalankan Seeding Terrawise.id LMS (30 Siswa, Tugas 2 Bulan, Kerja Kelompok & Penilaian DB)...");
 
   // 1. Bersihkan data lama
+  console.log("🧹 Membersihkan data lama di database...");
   await db.delete(ujianAttempts);
   await db.delete(soal);
   await db.delete(ujian);
@@ -31,8 +32,10 @@ async function main() {
   await db.delete(notifications);
   await db.delete(kelas);
   await db.delete(users);
+  console.log("✅ Data lama berhasil dibersihkan.");
 
-  // 2. Akun Pengguna (Sesuai Demo Credentials Laravel Terrawise)
+  // 2. Akun Guru & Administrator
+  console.log("👥 Meng-hash password dan membuat akun...");
   const superadminPass = await bcrypt.hash("superadmin123", 10);
   const adminPass = await bcrypt.hash("admin123", 10);
   const guruPass = await bcrypt.hash("guru123", 10);
@@ -78,41 +81,69 @@ async function main() {
     })
     .returning();
 
-  const [siswa1] = await db
+  // 3. DAFTAR 30 SISWA LENGKAP
+  const studentDataList = [
+    { name: "Ahmad Rizki", email: "siswa@terrawise.id" },
+    { name: "Siti Nurhaliza", email: "siswa2@terrawise.id" },
+    { name: "Budi Prasetyo", email: "siswa03@terrawise.id" },
+    { name: "Citra Dewi Kirana", email: "siswa04@terrawise.id" },
+    { name: "Dika Pratama", email: "siswa05@terrawise.id" },
+    { name: "Eka Putri Lestari", email: "siswa06@terrawise.id" },
+    { name: "Fajar Hidayat", email: "siswa07@terrawise.id" },
+    { name: "Gita Permata", email: "siswa08@terrawise.id" },
+    { name: "Hendra Wijaya", email: "siswa09@terrawise.id" },
+    { name: "Intan Safitri", email: "siswa10@terrawise.id" },
+    { name: "Joko Susilo", email: "siswa11@terrawise.id" },
+    { name: "Kartika Sari", email: "siswa12@terrawise.id" },
+    { name: "Lukman Hakim", email: "siswa13@terrawise.id" },
+    { name: "Maya Anggraini", email: "siswa14@terrawise.id" },
+    { name: "Naufal Rahman", email: "siswa15@terrawise.id" },
+    { name: "Olivia Maharani", email: "siswa16@terrawise.id" },
+    { name: "Panji Wicaksono", email: "siswa17@terrawise.id" },
+    { name: "Qoriatul Jannah", email: "siswa18@terrawise.id" },
+    { name: "Rian Saputra", email: "siswa19@terrawise.id" },
+    { name: "Salsabila Putri", email: "siswa20@terrawise.id" },
+    { name: "Taufik Ismail", email: "siswa21@terrawise.id" },
+    { name: "Utami Ningsih", email: "siswa22@terrawise.id" },
+    { name: "Viko Ardiansyah", email: "siswa23@terrawise.id" },
+    { name: "Wulan Dari", email: "siswa24@terrawise.id" },
+    { name: "Yoga Pratama", email: "siswa25@terrawise.id" },
+    { name: "Zahra Amelia", email: "siswa26@terrawise.id" },
+    { name: "Aditya Nugraha", email: "siswa27@terrawise.id" },
+    { name: "Bella Claudia", email: "siswa28@terrawise.id" },
+    { name: "Candra Gunawan", email: "siswa29@terrawise.id" },
+    { name: "Dina Mariana", email: "siswa30@terrawise.id" },
+  ];
+
+  const insertedStudents = await db
     .insert(users)
-    .values({
-      name: "Ahmad Rizki",
-      email: "siswa@terrawise.id",
-      password: siswaPass,
-      role: "STUDENT",
-    })
+    .values(
+      studentDataList.map((s) => ({
+        name: s.name,
+        email: s.email,
+        password: siswaPass,
+        role: "STUDENT" as const,
+      }))
+    )
     .returning();
 
-  const [siswa2] = await db
-    .insert(users)
-    .values({
-      name: "Siti Nurhaliza",
-      email: "siswa2@terrawise.id",
-      password: siswaPass,
-      role: "STUDENT",
-    })
-    .returning();
+  console.log(`✅ Berhasil membuat ${insertedStudents.length} akun siswa.`);
 
-  // 3. Kelas Pembelajaran
-  const [kelasX] = await db
-    .insert(kelas)
-    .values({
-      name: "X MIPA 1 - Sains & Komputasi Dasar",
-      description: "Pembelajaran sains terapan, logika algoritma, dan literasi digital",
-      teacherId: guru.id,
-    })
-    .returning();
-
+  // 4. Kelas Pembelajaran
   const [kelasXI] = await db
     .insert(kelas)
     .values({
       name: "XI MIPA 2 - Rekayasa Perangkat Lunak & Logika",
-      description: "Pengembangan pemikiran komputasi, algoritma pemrograman, dan basis data",
+      description: "Pengembangan pemikiran komputasi, arsitektur perangkat lunak, algoritma pemrograman, dan basis data terapan",
+      teacherId: guru.id,
+    })
+    .returning();
+
+  const [kelasX] = await db
+    .insert(kelas)
+    .values({
+      name: "X MIPA 1 - Sains & Komputasi Dasar",
+      description: "Pembelajaran sains terapan, logika algoritma, dan literasi digital dasar",
       teacherId: guru.id,
     })
     .returning();
@@ -126,532 +157,701 @@ async function main() {
     })
     .returning();
 
-  // 4. Enrollments (Daftarkan siswa ke seluruh kelas)
+  // Daftarkan ke-30 siswa ke kelas target XI MIPA 2
+  await db.insert(enrollments).values(
+    insertedStudents.map((s) => ({
+      studentId: s.id,
+      kelasId: kelasXI.id,
+    }))
+  );
+
+  // Daftarkan juga 2 siswa utama ke kelas X dan XII untuk cross-testing
   await db.insert(enrollments).values([
-    { studentId: siswa1.id, kelasId: kelasX.id },
-    { studentId: siswa1.id, kelasId: kelasXI.id },
-    { studentId: siswa1.id, kelasId: kelasXII.id },
-    { studentId: siswa2.id, kelasId: kelasX.id },
-    { studentId: siswa2.id, kelasId: kelasXI.id },
-    { studentId: siswa2.id, kelasId: kelasXII.id },
+    { studentId: insertedStudents[0].id, kelasId: kelasX.id },
+    { studentId: insertedStudents[0].id, kelasId: kelasXII.id },
+    { studentId: insertedStudents[1].id, kelasId: kelasX.id },
+    { studentId: insertedStudents[1].id, kelasId: kelasXII.id },
   ]);
 
-  // 5. Materi Pembelajaran (8 Materi Lengkap)
+  console.log(`✅ Seluruh ${insertedStudents.length} siswa berhasil didaftarkan ke ${kelasXI.name}.`);
+
+  // 5. Materi Pembelajaran (Bab 1 s/d Bab 4 di Kelas XI MIPA 2)
   await db.insert(materi).values([
     {
-      title: "Pengantar Algoritma dan Struktur Data Dasar",
+      title: "Bab 1: Dasar Arsitektur Sistem Perangkat Lunak & SDLC Modern",
       content:
-        "Memahami konsep efisiensi algoritma, notasi Big-O, tipe data primitif, array, serta struktur linier seperti stack dan queue dalam pemecahan masalah komputasi.",
+        "Pembahasan komprehensif mengenai siklus hidup pengembangan perangkat lunak (SDLC), metodologi Agile Scrum, pemodelan use case diagram, activity diagram, serta penyusunan dokumen Software Requirements Specification (SRS) standar industri.",
+      fileUrl: "https://drive.google.com/sample/bab1-arsitektur-sdlc.pdf",
+      kelasId: kelasXI.id,
+      authorId: guru.id,
+    },
+    {
+      title: "Bab 2: Desain Basis Data Relasional, ERD, dan Normalisasi 3NF",
+      content:
+        "Konsep Entity Relationship Diagram (ERD), normalisasi tabel dari 1NF hingga 3NF untuk mencegah redundansi dan anomali, manajemen constraint foreign key, serta perancangan index untuk performa query relasional.",
+      fileUrl: "https://drive.google.com/sample/bab2-database-normalisasi.pdf",
+      kelasId: kelasXI.id,
+      authorId: guru.id,
+    },
+    {
+      title: "Bab 3: Pemrograman Berorientasi Objek & Clean Architecture",
+      content:
+        "Penerapan 4 pilar OOP (Encapsulation, Abstraction, Inheritance, Polymorphism) dan prinsip SOLID. Membangun struktur kode modular, pemisahan layer controller-service-repository, dan unit testing otomatis.",
+      fileUrl: "https://drive.google.com/sample/bab3-oop-clean-architecture.pdf",
+      kelasId: kelasXI.id,
+      authorId: guru.id,
+    },
+    {
+      title: "Bab 4: Kolaborasi Tim, Git Flow, dan Manajemen Proyek Agile",
+      content:
+        "Panduan kerja kolaborasi tim: branching strategy (main, staging, feature branch), pull request review, merge conflict resolution, CI/CD pipeline automation, serta teknik evaluasi sejawat (peer review).",
+      fileUrl: "https://drive.google.com/sample/bab4-git-collaboration-agile.pdf",
+      kelasId: kelasXI.id,
+      authorId: guru.id,
+    },
+    {
+      title: "Pengantar Algoritma dan Struktur Data Dasar",
+      content: "Memahami konsep efisiensi algoritma, notasi Big-O, tipe data primitif, array, stack, dan queue.",
       fileUrl: "https://example.com/modul-algoritma-dasar.pdf",
       kelasId: kelasX.id,
       authorId: guru.id,
     },
     {
-      title: "Metode Ilmiah dan Perancangan Eksperimen Sains",
-      content:
-        "Langkah-langkah sistematis penelitian: identifikasi variabel bebas, terikat, dan kontrol, serta teknik pengumpulan data terukur yang valid.",
-      fileUrl: "https://example.com/metode-ilmiah-sains.pdf",
-      kelasId: kelasX.id,
-      authorId: guru.id,
-    },
-    {
-      title: "Konsep Dasar Kimia Larutan dan Keseimbangan Asam-Basa",
-      content:
-        "Teori Arrhenius, Bronsted-Lowry, dan Lewis tentang reaksi asam-basa, perhitungan derajat keasaman (pH/pOH), serta prinsip larutan penyangga (buffer).",
-      fileUrl: "https://example.com/asam-basa-larutan.pdf",
-      kelasId: kelasX.id,
-      authorId: guru.id,
-    },
-    {
-      title: "Sistem Basis Data Relasional dan Normalisasi Data",
-      content:
-        "Prinsip desain database relational: Entity Relationship Diagram (ERD), kunci primer (primary key), foreign key, dan tahapan normalisasi 1NF hingga 3NF.",
-      fileUrl: "https://example.com/database-normalisasi.pdf",
-      kelasId: kelasXI.id,
-      authorId: guru.id,
-    },
-    {
-      title: "Pemrograman Berorientasi Objek (OOP) & Clean Code",
-      content:
-        "Empat pilar OOP: Enkapsulasi, Abstraksi, Pewarisan (Inheritance), dan Polimorfisme, disertai best practice penulisan kode modular yang mudah diuji.",
-      fileUrl: "https://example.com/oop-clean-code.pdf",
-      kelasId: kelasXI.id,
-      authorId: guru.id,
-    },
-    {
       title: "Bioteknologi Fermentasi & Rekayasa Pangan Tradisional",
-      content:
-        "Peran mikroorganisme (ragi Saccharomyces, bakteri Lactobacillus) dalam proses fermentasi pangan bernilai gizi tinggi dan teknik kontrol sterilisasi.",
+      content: "Kajian mikroorganisme dalam fermentasi pangan bernilai gizi tinggi dan teknik kontrol sterilisasi.",
       fileUrl: "https://example.com/bioteknologi-fermentasi.pdf",
       kelasId: kelasXII.id,
       authorId: guru2.id,
     },
-    {
-      title: "Dinamika Ekosistem dan Siklus Biogeokimia Lingkungan",
-      content:
-        "Aliran energi trofik pada jaring makanan, siklus nitrogen, fosfor, karbon, serta evaluasi dampak pencemaran terhadap daya dukung lingkungan hidup.",
-      fileUrl: "https://example.com/ekosistem-biogeokimia.pdf",
-      kelasId: kelasXII.id,
-      authorId: guru2.id,
-    },
-    {
-      title: "Etika Akademik dan Metodologi Penulisan Karya Ilmiah",
-      content:
-        "Panduan sitasi baku (APA Style), teknik parafrase untuk menghindari plagiarisme, serta tata cara penyusunan abstrak dan bab kesimpulan laporan penelitian.",
-      fileUrl: "https://example.com/penulisan-karya-ilmiah.pdf",
-      kelasId: kelasXII.id,
-      authorId: guru2.id,
-    },
   ]);
 
-  // 6. Tugas Pembelajaran (Lengkap 4 TIPE TUGAS)
+  console.log("✅ Materi pembelajaran berhasil dibuat.");
+
+  // 6. RENTANG WAKTU 2 BULAN (60 Hari ke Depan)
   const now = Date.now();
   const day = 24 * 60 * 60 * 1000;
+  const twoMonthsDue = new Date(now + 60 * day); // 2 Bulan dari sekarang
 
-  // TIPE 1: Pilihan Ganda (MULTIPLE_CHOICE)
-  const [tugasPG] = await db
+  // =========================================================================
+  // TUGAS 1: PROYEK KELOMPOK (Model Asesmen 4 - Pengerjaan 2 Bulan)
+  // =========================================================================
+  const groupDivisionConfig = {
+    groups: [
+      {
+        id: "grp-1",
+        name: "Kelompok 1 (Alpha Dev)",
+        leader: "Ahmad Rizki",
+        members: "Ahmad Rizki (Ketua), Siti Nurhaliza, Budi Prasetyo, Citra Dewi Kirana, Dika Pratama, Eka Putri Lestari",
+        topic: "Modul Autentikasi, Keamanan RBAC, & Audit Log Sistem",
+      },
+      {
+        id: "grp-2",
+        name: "Kelompok 2 (Beta Logic)",
+        leader: "Fajar Hidayat",
+        members: "Fajar Hidayat (Ketua), Gita Permata, Hendra Wijaya, Intan Safitri, Joko Susilo, Kartika Sari",
+        topic: "Modul Kurikulum, Manajemen Kelas, & Bank Soal Terpadu",
+      },
+      {
+        id: "grp-3",
+        name: "Kelompok 3 (Gamma Core)",
+        leader: "Lukman Hakim",
+        members: "Lukman Hakim (Ketua), Maya Anggraini, Naufal Rahman, Olivia Maharani, Panji Wicaksono, Qoriatul Jannah",
+        topic: "Modul Ujian Berbasis Timer, Engine Acak Soal, & Auto-Grading",
+      },
+      {
+        id: "grp-4",
+        name: "Kelompok 4 (Delta Stack)",
+        leader: "Rian Saputra",
+        members: "Rian Saputra (Ketua), Salsabila Putri, Taufik Ismail, Utami Ningsih, Viko Ardiansyah, Wulan Dari",
+        topic: "Modul Penilaian Evaluasi Sejawat (Peer Assessment) & Analitik Belajar",
+      },
+      {
+        id: "grp-5",
+        name: "Kelompok 5 (Epsilon Lab)",
+        leader: "Yoga Pratama",
+        members: "Yoga Pratama (Ketua), Zahra Amelia, Aditya Nugraha, Bella Claudia, Candra Gunawan, Dina Mariana",
+        topic: "Modul Pelaporan Rapor Siswa & Ekspor Data Akademik Terstandar",
+      },
+    ],
+    enablePeerAssessment: true,
+    scaleItems: [
+      { id: "s-1", label: "Tidak Memenuhi", points: 0 },
+      { id: "s-2", label: "Kurang Baik", points: 1 },
+      { id: "s-3", label: "Cukup Baik", points: 2 },
+      { id: "s-4", label: "Baik & Solid", points: 3 },
+      { id: "s-5", label: "Sangat Baik & Luar Biasa", points: 4 },
+    ],
+    criteria: [
+      "Kerjasama Tim & Pembagian Tugas",
+      "Kualitas Laporan & Metodologi Kerja",
+      "Presentasi & Tanggung Jawab Anggota",
+    ],
+  };
+
+  const [tugasKelompok] = await db
     .insert(tugas)
     .values({
-      title: "Kuis Pilihan Ganda: Logika Algoritma & Tipe Data",
-      description:
-        "Uji pemahaman mandiri materi logika komputasi dan struktur kontrol percabangan. Pilihlah opsi jawaban yang paling tepat. Nilai akan terhitung otomatis.",
-      tipe: "MULTIPLE_CHOICE",
-      dueDate: new Date(now + 7 * day),
+      title: "Proyek Capstone 2 Bulan: Rancang Bangun Sistem Informasi Akademik & E-Learning Terpadu",
+      description: `Proyek kolaboratif berskala besar berdurasi 2 bulan untuk 30 siswa yang dibagi ke dalam 5 tim kerja spesialisasi (masing-masing 6 siswa).
+Deliverables proyek mencakup:
+1. Dokumen Software Requirements Specification (SRS) dan Analisis Masalah
+2. Desain Skema Database Relasional Ternormalisasi (ERD 3NF)
+3. Implementasi Prototype Aplikasi Web Fullstack Next.js
+4. Laporan Akhir Evaluasi Proyek Tim dan Evaluasi Sejawat (Peer Assessment)
+
+Setiap ketua/anggota tim diwajibkan memberikan penilaian objektif antar kelompok lain melalui instrumen evaluasi sejawat yang disediakan.`,
+      tipe: "KELOMPOK",
+      dueDate: twoMonthsDue,
       maxScore: 100,
-      kelasId: kelasX.id,
+      kelasId: kelasXI.id,
       authorId: guru.id,
     })
     .returning();
 
-  const [tugasPGSoal1, tugasPGSoal2, tugasPGSoal3, tugasPGSoal4] = await db
+  // Simpan konfigurasi 5 kelompok & rubrik peer assessment ke DB
+  await db.insert(tugasSoal).values({
+    tugasId: tugasKelompok.id,
+    type: "ESSAY",
+    question: "__GROUP_CONFIG__",
+    options: groupDivisionConfig,
+    points: 0,
+    order: 0,
+  });
+
+  // SUBMISSION & PENILAIAN LENGKAP KE-5 KELOMPOK LANGSUNG KE DB
+  // Kelompok 1 (Alpha Dev) - Submitted & Graded
+  await db.insert(tugasSubmissions).values({
+    tugasId: tugasKelompok.id,
+    studentId: insertedStudents[0].id, // Ahmad Rizki
+    groupName: "Kelompok 1 (Alpha Dev)",
+    groupMembers: "Ahmad Rizki (Ketua), Siti Nurhaliza, Budi Prasetyo, Citra Dewi Kirana, Dika Pratama, Eka Putri Lestari",
+    answerText: `Laporan Hasil Proyek Kelompok 1 (Alpha Dev):
+- Modul autentikasi telah selesai diimplementasikan menggunakan NextAuth.js v5 dengan JWT strategy.
+- Menerapkan kontrol akses berbasis peran (RBAC) ketat untuk 4 tingkatan: Superadmin, Admin, Guru, dan Siswa.
+- Seluruh password di-hash menggunakan algoritma bcrypt (10 salt rounds).
+- Database migration aman dan didukung audit trail login.`,
+    fileUrl: "https://github.com/terrawise-org/capstone-alpha-auth-rbac",
+    answers: {
+      peerEvaluation: {
+        targetGroup: "Kelompok 2 (Beta Logic)",
+        rating: "Sangat Baik & Luar Biasa",
+        points: 4,
+        comment: "Struktur manajemen kurikulum dan bank soal Kelompok 2 sangat modular dan mudah diintegrasikan dengan modul auth kami.",
+      },
+    },
+    score: 96,
+    feedback: "Luar biasa! Arsitektur keamanan RBAC sangat kokoh dan kode rapi sesuai clean architecture.",
+    submittedAt: new Date(now - 3 * day),
+    gradedAt: new Date(now - 1 * day),
+  });
+
+  // Kelompok 2 (Beta Logic) - Submitted & Graded
+  await db.insert(tugasSubmissions).values({
+    tugasId: tugasKelompok.id,
+    studentId: insertedStudents[6].id, // Fajar Hidayat
+    groupName: "Kelompok 2 (Beta Logic)",
+    groupMembers: "Fajar Hidayat (Ketua), Gita Permata, Hendra Wijaya, Intan Safitri, Joko Susilo, Kartika Sari",
+    answerText: `Laporan Hasil Proyek Kelompok 2 (Beta Logic):
+- Desain katalog materi pembelajaran berbasis bab dan urutan kompetensi dasar.
+- Manajemen 4 model tugas dan bank soal terpadu.
+- Fitur filter kategori dinamis dan preview materi PDF langsung di browser.`,
+    fileUrl: "https://github.com/terrawise-org/capstone-beta-curriculum",
+    answers: {
+      peerEvaluation: {
+        targetGroup: "Kelompok 3 (Gamma Core)",
+        rating: "Baik & Solid",
+        points: 3,
+        comment: "Engine ujian Kelompok 3 berjalan lancar, sinkronisasi data butir soal dan kunci jawaban presisi.",
+      },
+    },
+    score: 92,
+    feedback: "Struktur kurikulum dan manajemen materi sangat terorganisir dengan baik.",
+    submittedAt: new Date(now - 2 * day),
+    gradedAt: new Date(now - 1 * day),
+  });
+
+  // Kelompok 3 (Gamma Core) - Submitted & Graded
+  await db.insert(tugasSubmissions).values({
+    tugasId: tugasKelompok.id,
+    studentId: insertedStudents[12].id, // Lukman Hakim
+    groupName: "Kelompok 3 (Gamma Core)",
+    groupMembers: "Lukman Hakim (Ketua), Maya Anggraini, Naufal Rahman, Olivia Maharani, Panji Wicaksono, Qoriatul Jannah",
+    answerText: `Laporan Hasil Proyek Kelompok 3 (Gamma Core):
+- Implementasi engine ujian online berbasis timer countdown server-side & client-side.
+- Fitur auto-grading instan untuk tipe pilihan ganda.
+- Mekanisme auto-submit jika batas waktu pengerjaan berakhir.`,
+    fileUrl: "https://github.com/terrawise-org/capstone-gamma-exam-engine",
+    answers: {
+      peerEvaluation: {
+        targetGroup: "Kelompok 4 (Delta Stack)",
+        rating: "Sangat Baik & Luar Biasa",
+        points: 4,
+        comment: "Instrumen penilaian evaluasi sejawat dari Kelompok 4 sangat intuitif dan memudahkan penilaian kolaborasi.",
+      },
+    },
+    score: 94,
+    feedback: "Sistem timer pengerjaan ujian sangat presisi dan auto-grading bekerja tanpa celah.",
+    submittedAt: new Date(now - 2 * day),
+    gradedAt: new Date(now - 12 * 60 * 60 * 1000),
+  });
+
+  // Kelompok 4 (Delta Stack) - Submitted & Graded
+  await db.insert(tugasSubmissions).values({
+    tugasId: tugasKelompok.id,
+    studentId: insertedStudents[18].id, // Rian Saputra
+    groupName: "Kelompok 4 (Delta Stack)",
+    groupMembers: "Rian Saputra (Ketua), Salsabila Putri, Taufik Ismail, Utami Ningsih, Viko Ardiansyah, Wulan Dari",
+    answerText: `Laporan Hasil Proyek Kelompok 4 (Delta Stack):
+- Modul peer assessment dengan skala 5 poin dan input catatan konstruktif.
+- Dashboard rekapitulasi penilaian sejawat per kelompok siswa.
+- Kalkulasi bobot nilai tim dan transparansi evaluasi kolaboratif.`,
+    fileUrl: "https://github.com/terrawise-org/capstone-delta-peer-assessment",
+    answers: {
+      peerEvaluation: {
+        targetGroup: "Kelompok 5 (Epsilon Lab)",
+        rating: "Baik & Solid",
+        points: 3,
+        comment: "Laporan ekspor data nilai dari Kelompok 5 sangat lengkap dan informatif.",
+      },
+    },
+    score: 90,
+    feedback: "Sistem rubrik evaluasi tim berfungsi dengan baik dan transparan.",
+    submittedAt: new Date(now - 1 * day),
+    gradedAt: new Date(now - 6 * 60 * 60 * 1000),
+  });
+
+  // Kelompok 5 (Epsilon Lab) - Submitted & Graded
+  await db.insert(tugasSubmissions).values({
+    tugasId: tugasKelompok.id,
+    studentId: insertedStudents[24].id, // Yoga Pratama
+    groupName: "Kelompok 5 (Epsilon Lab)",
+    groupMembers: "Yoga Pratama (Ketua), Zahra Amelia, Aditya Nugraha, Bella Claudia, Candra Gunawan, Dina Mariana",
+    answerText: `Laporan Hasil Proyek Kelompok 5 (Epsilon Lab):
+- Modul rekap nilai akademik dan ekspor transkrip nilai siswa ke format CSV dan PDF.
+- Dashboard statistik perkembangan belajar siswa per semester.
+- Integrasi endpoint API rekapitulasi nilai terstandar.`,
+    fileUrl: "https://github.com/terrawise-org/capstone-epsilon-reports",
+    answers: {
+      peerEvaluation: {
+        targetGroup: "Kelompok 1 (Alpha Dev)",
+        rating: "Sangat Baik & Luar Biasa",
+        points: 4,
+        comment: "Autentikasi Kelompok 1 sangat cepat dan memudahkan modul kami mengambil data siswa yang sedang login.",
+      },
+    },
+    score: 89,
+    feedback: "Modul pelaporan sudah sangat fungsional, pertahankan kualitas dan tingkatkan performa ekspor data.",
+    submittedAt: new Date(now - 1 * day),
+    gradedAt: new Date(now - 3 * 60 * 60 * 1000),
+  });
+
+  console.log("✅ Tugas Proyek Kelompok 2 Bulan beserta konfigurasi 5 kelompok & penilaian DB berhasil dibuat.");
+
+  // =========================================================================
+  // TUGAS 2: TUGAS MANDIRI (Model Asesmen 3 - Pengerjaan 2 Bulan)
+  // =========================================================================
+  const [tugasMandiri2Bulan] = await db
+    .insert(tugas)
+    .values({
+      title: "Tugas Mandiri Analisis: Studi Kasus Perancangan Schema Database & Normalisasi 3NF",
+      description: `Tugas individual komprehensif berdurasi 2 bulan:
+Analisis studi kasus sistem manajemen perpustakaan digital modern.
+1. Identifikasi seluruh entitas, atribut primer, foreign key, dan relasi cardinalitas (1:1, 1:N, M:N).
+2. Gambarkan Entity Relationship Diagram (ERD) lengkap.
+3. Lakukan proses normalisasi bertahap dari unnormalized form (UNF), 1NF, 2NF, hingga Third Normal Form (3NF).
+4. Kumpulkan hasil analisis berupa ringkasan terstruktur dan tautan dokumen PDF hasil perancangan.`,
+      tipe: "MANDIRI",
+      dueDate: twoMonthsDue,
+      maxScore: 100,
+      kelasId: kelasXI.id,
+      authorId: guru.id,
+    })
+    .returning();
+
+  // Submission & Penilaian Tugas Mandiri oleh Ahmad Rizki
+  await db.insert(tugasSubmissions).values({
+    tugasId: tugasMandiri2Bulan.id,
+    studentId: insertedStudents[0].id,
+    answerText: `Hasil Analisis Skema Database Perpustakaan Digital:
+1. Teridentifikasi 6 entitas utama: Anggota, Buku, Kategori, Peminjaman, DetailPeminjaman, dan Petugas.
+2. Seluruh dependensi transitif pada tabel Peminjaman telah dipecah ke entitas referensi untuk memenuhi standar 3NF.
+3. Skema telah diuji bebas dari anomali insertion, deletion, dan update.`,
+    fileUrl: "https://drive.google.com/sample/erd-normalisasi-3nf-ahmad.pdf",
+    score: 95,
+    feedback: "Analisis dependensi fungsional sangat cermat dan perancangan skema memenuhi kaidah 3NF.",
+    submittedAt: new Date(now - 2 * day),
+    gradedAt: new Date(now - 1 * day),
+  });
+
+  // Submission & Penilaian Tugas Mandiri oleh Siti Nurhaliza
+  await db.insert(tugasSubmissions).values({
+    tugasId: tugasMandiri2Bulan.id,
+    studentId: insertedStudents[1].id,
+    answerText: `Ringkasan Normalisasi 3NF:
+- Berhasil mengeliminasi multi-valued attributes pada 1NF.
+- Menghilangkan dependensi parsial terhadap composite key pada 2NF.
+- Mengisolasi dependensi transitif pada tabel anggota dan denda ke tabel referensi tarif.`,
+    fileUrl: "https://drive.google.com/sample/laporan-erd-siti.pdf",
+    score: 92,
+    feedback: "Penjelasan tahapan normalisasi sangat runtut dan mudah dipahami.",
+    submittedAt: new Date(now - 2 * day),
+    gradedAt: new Date(now - 12 * 60 * 60 * 1000),
+  });
+
+  // =========================================================================
+  // TUGAS 3: SOAL ESSAY (Model Asesmen 2 - Pengerjaan 2 Bulan)
+  // =========================================================================
+  const [tugasEssay2Bulan] = await db
+    .insert(tugas)
+    .values({
+      title: "Tugas Uraian Komprehensif: Pemodelan UML, Use Case, dan Prinsip SOLID",
+      description: `Jawablah butir pertanyaan uraian berikut dengan argumen analitis dan contoh implementasi nyata. Setiap butir soal dinilai berdasarkan rubrik kejelasan konsep dan kedalaman analisis teknis.`,
+      tipe: "ESSAY",
+      dueDate: twoMonthsDue,
+      maxScore: 100,
+      kelasId: kelasXI.id,
+      authorId: guru.id,
+    })
+    .returning();
+
+  const [esSoal1, esSoal2, esSoal3, esSoal4] = await db
     .insert(tugasSoal)
     .values([
       {
-        tugasId: tugasPG.id,
-        type: "MULTIPLE_CHOICE",
-        question: "Manakah di bawah ini yang merupakan tipe data bilangan bulat pada sebagian besar bahasa pemrograman?",
-        options: ["Integer", "Float", "Boolean", "String"],
-        correctAnswer: "A",
+        tugasId: tugasEssay2Bulan.id,
+        type: "ESSAY",
+        question: "Jelaskan prinsip Single Responsibility Principle (SRP) dalam SOLID dan berikan contoh refactoring kode class yang melanggar prinsip tersebut!",
         points: 25,
         order: 1,
       },
       {
-        tugasId: tugasPG.id,
-        type: "MULTIPLE_CHOICE",
-        question: "Simbol flowchart yang digunakan untuk menyatakan kondisi keputusan (decision) adalah...",
-        options: ["Belah Ketupat (Diamond)", "Persegi Panjang", "Oval / Elips", "Jajar Genjang"],
-        correctAnswer: "A",
+        tugasId: tugasEssay2Bulan.id,
+        type: "ESSAY",
+        question: "Bagaimana cara kerja prinsip Dependency Inversion Principle (DIP) dalam memisahkan modul tingkat tinggi (high-level) dari modul tingkat rendah (low-level)?",
         points: 25,
         order: 2,
       },
       {
-        tugasId: tugasPG.id,
-        type: "MULTIPLE_CHOICE",
-        question: "Operasi logika yang menghasilkan nilai TRUE jika hanya salah satu operand bernilai TRUE adalah...",
-        options: ["XOR", "AND", "OR", "NOT"],
-        correctAnswer: "A",
+        tugasId: tugasEssay2Bulan.id,
+        type: "ESSAY",
+        question: "Uraikan perbedaan fungsional antara relasi 'include' dan 'extend' pada Use Case Diagram UML disertai contoh kasus nyata!",
         points: 25,
         order: 3,
       },
       {
-        tugasId: tugasPG.id,
-        type: "MULTIPLE_CHOICE",
-        question: "Struktur perulangan yang pasti dijalankan minimal satu kali sebelum pengecekan kondisi adalah...",
-        options: ["do-while", "for", "while", "foreach"],
-        correctAnswer: "A",
+        tugasId: tugasEssay2Bulan.id,
+        type: "ESSAY",
+        question: "Dalam perancangan RESTful API, jelaskan peran status code HTTP (200, 201, 400, 401, 403, 404, 500) dan best practice pendokumentasian payload!",
         points: 25,
         order: 4,
       },
     ])
     .returning();
 
-  // Submission untuk Tugas PG (Siswa 1 sudah mengerjakan dengan auto-grade 100)
+  // Submission & Penilaian Soal Essay oleh Ahmad Rizki
   await db.insert(tugasSubmissions).values({
-    tugasId: tugasPG.id,
-    studentId: siswa1.id,
+    tugasId: tugasEssay2Bulan.id,
+    studentId: insertedStudents[0].id,
     answers: {
-      [tugasPGSoal1.id]: "A",
-      [tugasPGSoal2.id]: "A",
-      [tugasPGSoal3.id]: "A",
-      [tugasPGSoal4.id]: "A",
+      [esSoal1.id]: "SRP menyatakan bahwa sebuah class hanya boleh memiliki satu alasan untuk berubah. Contoh: Memisahkan UserReportGenerator dari UserRepository.",
+      [esSoal2.id]: "DIP mengarahkan agar modul tingkat tinggi dan tingkat rendah sama-sama bergantung pada abstraksi/interface, bukan pada implementasi konkrit.",
+      [esSoal3.id]: "Relasi 'include' menunjukkan perilaku wajib yang selalu dieksekusi (cth: Checkout include Login), sedangkan 'extend' adalah perilaku opsional kondisional (cth: Checkout extend GunakanVoucherDiskon).",
+      [esSoal4.id]: "HTTP status code memberikan standarisasi respons: 200 OK, 201 Created, 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, dan 500 Internal Server Error.",
     },
+    answerText: "Lembar jawaban essay lengkap telah diisi.",
+    score: 98,
+    feedback: "Penjelasan prinsip SOLID dan Use Case Diagram sangat sempurna dan aplikatif!",
+    submittedAt: new Date(now - 1 * day),
+    gradedAt: new Date(now - 5 * 60 * 60 * 1000),
+  });
+
+  // =========================================================================
+  // TUGAS 4: KUIS PILIHAN GANDA (Model Asesmen 1 - Pengerjaan 2 Bulan)
+  // =========================================================================
+  const [tugasPG2Bulan] = await db
+    .insert(tugas)
+    .values({
+      title: "Kuis Evaluasi Berkala: Pemahaman Konsep Pemrograman & Algoritma Lanjut",
+      description: "Kuis objektif 10 butir soal pilihan ganda untuk mengevaluasi pemahaman logika pemrograman dan algoritma. Sistem akan menghitung skor otomatis secara instan.",
+      tipe: "MULTIPLE_CHOICE",
+      dueDate: twoMonthsDue,
+      maxScore: 100,
+      kelasId: kelasXI.id,
+      authorId: guru.id,
+    })
+    .returning();
+
+  const mcSoalList = await db
+    .insert(tugasSoal)
+    .values([
+      {
+        tugasId: tugasPG2Bulan.id,
+        type: "MULTIPLE_CHOICE",
+        question: "Prinsip OOP yang membungkus data (atribut) dan fungsi (method) dalam satu kesatuan unit class disebut...",
+        options: ["Enkapsulasi (Encapsulation)", "Pewarisan (Inheritance)", "Polimorfisme (Polymorphism)", "Abstraksi (Abstraction)"],
+        correctAnswer: "A",
+        points: 10,
+        order: 1,
+      },
+      {
+        tugasId: tugasPG2Bulan.id,
+        type: "MULTIPLE_CHOICE",
+        question: "Perintah SQL yang digunakan untuk menambahkan kolom baru ke tabel yang sudah ada adalah...",
+        options: ["ALTER TABLE ... ADD COLUMN", "UPDATE TABLE ... ADD", "MODIFY TABLE ... INSERT", "CREATE COLUMN ... IN"],
+        correctAnswer: "A",
+        points: 10,
+        order: 2,
+      },
+      {
+        tugasId: tugasPG2Bulan.id,
+        type: "MULTIPLE_CHOICE",
+        question: "Kompleksitas waktu rata-rata (average time complexity) dari algoritma Quick Sort adalah...",
+        options: ["O(n log n)", "O(n²)", "O(n)", "O(log n)"],
+        correctAnswer: "A",
+        points: 10,
+        order: 3,
+      },
+      {
+        tugasId: tugasPG2Bulan.id,
+        type: "MULTIPLE_CHOICE",
+        question: "Struktur data yang beroperasi berdasarkan prinsip First-In, First-Out (FIFO) adalah...",
+        options: ["Queue", "Stack", "Binary Tree", "Hash Map"],
+        correctAnswer: "A",
+        points: 10,
+        order: 4,
+      },
+      {
+        tugasId: tugasPG2Bulan.id,
+        type: "MULTIPLE_CHOICE",
+        question: "Dalam Git, perintah untuk menggabungkan perubahan dari branch lain ke branch saat ini adalah...",
+        options: ["git merge", "git push", "git clone", "git status"],
+        correctAnswer: "A",
+        points: 10,
+        order: 5,
+      },
+      {
+        tugasId: tugasPG2Bulan.id,
+        type: "MULTIPLE_CHOICE",
+        question: "Klausul SQL yang digunakan untuk menyaring data berdasarkan fungsi agregasi seperti COUNT() atau AVG() adalah...",
+        options: ["HAVING", "WHERE", "ORDER BY", "GROUP BY"],
+        correctAnswer: "A",
+        points: 10,
+        order: 6,
+      },
+      {
+        tugasId: tugasPG2Bulan.id,
+        type: "MULTIPLE_CHOICE",
+        question: "Dalam arsitektur MVC, komponen yang bertanggung jawab untuk menangani logika bisnis dan manipulasi data adalah...",
+        options: ["Model", "View", "Controller", "Router"],
+        correctAnswer: "A",
+        points: 10,
+        order: 7,
+      },
+      {
+        tugasId: tugasPG2Bulan.id,
+        type: "MULTIPLE_CHOICE",
+        question: "Protokol keamanan web standar yang mengenkripsi komunikasi antara browser klien dan web server adalah...",
+        options: ["HTTPS (TLS/SSL)", "FTP", "HTTP biasa", "Telnet"],
+        correctAnswer: "A",
+        points: 10,
+        order: 8,
+      },
+      {
+        tugasId: tugasPG2Bulan.id,
+        type: "MULTIPLE_CHOICE",
+        question: "Metode HTTP yang bersifat idempoten dan digunakan untuk memperbarui seluruh resource data secara lengkap adalah...",
+        options: ["PUT", "POST", "PATCH", "DELETE"],
+        correctAnswer: "A",
+        points: 10,
+        order: 9,
+      },
+      {
+        tugasId: tugasPG2Bulan.id,
+        type: "MULTIPLE_CHOICE",
+        question: "Indeks basis data yang menjamin tidak adanya duplikasi nilai pada kolom tertentu disebut...",
+        options: ["Unique Index", "Clustered Index", "Full-text Index", "Foreign Index"],
+        correctAnswer: "A",
+        points: 10,
+        order: 10,
+      },
+    ])
+    .returning();
+
+  // Submission Kuis PG oleh Siswa 1 (Skor 100)
+  await db.insert(tugasSubmissions).values({
+    tugasId: tugasPG2Bulan.id,
+    studentId: insertedStudents[0].id,
+    answers: Object.fromEntries(mcSoalList.map((s) => [s.id, "A"])),
     score: 100,
-    feedback: "Sangat baik! Seluruh jawaban kuis pilihan ganda benar.",
+    feedback: "Sempurna! Seluruh butir kuis pilihan ganda dijawab dengan benar.",
     submittedAt: new Date(now - 1 * day),
     gradedAt: new Date(now - 1 * day),
   });
 
-  // TIPE 2: Essay (ESSAY)
-  const [tugasEssay] = await db
-    .insert(tugas)
+  // Submission Kuis PG oleh Siswa 2 (Skor 90)
+  await db.insert(tugasSubmissions).values({
+    tugasId: tugasPG2Bulan.id,
+    studentId: insertedStudents[1].id,
+    answers: {
+      ...Object.fromEntries(mcSoalList.map((s) => [s.id, "A"])),
+      [mcSoalList[2].id]: "B", // 1 salah
+    },
+    score: 90,
+    feedback: "Sangat baik! 9 dari 10 soal terjawab dengan tepat.",
+    submittedAt: new Date(now - 1 * day),
+    gradedAt: new Date(now - 1 * day),
+  });
+
+  console.log("✅ 4 Tipe Tugas Berdurasi 2 Bulan lengkap dengan butir soal & penilaian DB berhasil dibuat.");
+
+  // =========================================================================
+  // 7. UJIAN AKHIR SEMESTER (UAS CAMPURAN PG & ESSAY - RENTANG 2 BULAN)
+  // =========================================================================
+  const [uasMixed] = await db
+    .insert(ujian)
     .values({
-      title: "Tugas Soal Essay: Analisis Arsitektur OOP & Normalisasi Database",
-      description:
-        "Jawab pertanyaan essay berikut dengan argumentasi teknis, contoh kode atau skema relevan. Jawaban akan dinilai langsung oleh guru pengampu.",
-      tipe: "ESSAY",
-      dueDate: new Date(now + 8 * day),
-      maxScore: 100,
+      title: "Ujian Akhir Semester (UAS) Komprehensif Rekayasa Perangkat Lunak",
+      tipe: "MIXED",
+      startTime: new Date(now - 1 * day),
+      endTime: twoMonthsDue,
+      durationMinutes: 90,
       kelasId: kelasXI.id,
       authorId: guru.id,
     })
     .returning();
 
-  const [tugasEssaySoal1, tugasEssaySoal2, tugasEssaySoal3] = await db
-    .insert(tugasSoal)
-    .values([
-      {
-        tugasId: tugasEssay.id,
-        type: "ESSAY",
-        question: "Jelaskan konsep Polymorphism dalam OOP dan berikan studi kasus penggunaannya dalam sistem perbankan!",
-        points: 35,
-        order: 1,
-      },
-      {
-        tugasId: tugasEssay.id,
-        type: "ESSAY",
-        question: "Apa perbedaan mendasar antara First Normal Form (1NF) dan Second Normal Form (2NF)?",
-        points: 35,
-        order: 2,
-      },
-      {
-        tugasId: tugasEssay.id,
-        type: "ESSAY",
-        question: "Mengapa dependensi transitif harus dihilangkan pada Third Normal Form (3NF)? Berikan dampaknya terhadap integritas data!",
-        points: 30,
-        order: 3,
-      },
-    ])
-    .returning();
-
-  // Submission Tugas Essay (Siswa 2 sudah mengumpulkan, sudah dinilai guru)
-  await db.insert(tugasSubmissions).values({
-    tugasId: tugasEssay.id,
-    studentId: siswa2.id,
-    answers: {
-      [tugasEssaySoal1.id]:
-        "Polymorphism memungkinkan satu interface merepresentasikan aksi yang berbeda. Contoh perbankan: class Rekening memiliki method hitungBunga() yang di-override oleh RekeningTabungan, RekeningGiro, dan Deposito.",
-      [tugasEssaySoal2.id]:
-        "1NF mensyaratkan setiap kolom bernilai atomik. 2NF mensyaratkan telah memenuhi 1NF dan tidak ada dependensi parsial terhadap primary key komposit.",
-      [tugasEssaySoal3.id]:
-        "Dependensi transitif menyebabkan anomali update dan redundansi data. Dengan 3NF, setiap atribut non-kunci hanya bergantung langsung pada primary key.",
-    },
-    answerText: "Jawaban essay lengkap telah dicantumkan per pertanyaan.",
-    score: 95,
-    feedback: "Penjelasan mengenai dependensi fungsional dan contoh perbankan sangat komprehensif!",
-    submittedAt: new Date(now - 12 * 60 * 60 * 1000),
-    gradedAt: new Date(now - 2 * 60 * 60 * 1000),
-  });
-
-  // TIPE 3: Mandiri (MANDIRI)
-  const [tugasMandiri] = await db
-    .insert(tugas)
-    .values({
-      title: "Tugas Mandiri: Laporan Praktikum Titrasi Asam Basa & Kimia Larutan",
-      description:
-        "Susun laporan praktikum titrasi larutan HCl menggunakan larutan standar NaOH 0.1 M. Cantumkan kurva titrasi, titik ekuivalen, dan perhitungan konsentrasi sampel. Pengumpulan berupa uraian ringkasan dan tautan PDF laporan.",
-      tipe: "MANDIRI",
-      dueDate: new Date(now + 6 * day),
-      maxScore: 100,
-      kelasId: kelasX.id,
-      authorId: guru.id,
-    })
-    .returning();
-
-  // Submission Tugas Mandiri oleh Siswa 1
-  await db.insert(tugasSubmissions).values({
-    tugasId: tugasMandiri.id,
-    studentId: siswa1.id,
-    answerText:
-      "Titrasi dilakukan sebanyak 3 kali pengulangan (triplo). Rata-rata volume NaOH yang dibutuhkan untuk mencapai titik akhir fenolftalein adalah 18.4 mL. Konsentrasi HCl terhitung sebesar 0.092 M.",
-    fileUrl: "https://drive.google.com/sample/laporan-titrasi-ahmad.pdf",
-    score: 92,
-    feedback: "Metodologi eksperimen sangat rapi dan perhitungan stoikiometri akurat!",
-    submittedAt: new Date(now - 1 * day),
-    gradedAt: new Date(now - 12 * 60 * 60 * 1000),
-  });
-
-  // TIPE 4: Kelompok (KELOMPOK)
-  const [tugasKelompok] = await db
-    .insert(tugas)
-    .values({
-      title: "Proyek Kelompok: Riset Rekayasa Bioteknologi & Pangan Berkelanjutan",
-      description:
-        "Bentuk kelompok beranggotakan 2-4 siswa. Buat proposal karya ilmiah inovasi produk fermentasi pangan lokal berdaya saing tinggi. Cantumkan nama kelompok, daftar anggota, dan link repository/dokumen.",
-      tipe: "KELOMPOK",
-      dueDate: new Date(now + 14 * day),
-      maxScore: 100,
-      kelasId: kelasXII.id,
-      authorId: guru2.id,
-    })
-    .returning();
-
-  // Submission Tugas Kelompok oleh Siswa 1 & Siswa 2
-  await db.insert(tugasSubmissions).values({
-    tugasId: tugasKelompok.id,
-    studentId: siswa1.id,
-    groupName: "Kelompok Alpha - BioSains",
-    groupMembers: "1. Ahmad Rizki (Ketua), 2. Siti Nurhaliza (Peneliti), 3. Budi Setiawan (Dokumentasi)",
-    answerText:
-      "Kelompok kami meneliti optimasi fermentasi tempe gembus menggunakan inokulum Rhizopus oligosporus terkontrol untuk meningkatkan profil asam amino esensial.",
-    fileUrl: "https://github.com/terrawise-bio/proposal-bioteknologi-alpha",
-    score: null, // Belum dinilai guru (siap dinilai!)
-    feedback: null,
-    submittedAt: new Date(now - 4 * 60 * 60 * 1000),
-  });
-
-  // Tugas Mandiri Tambahan
-  await db.insert(tugas).values({
-    title: "Tugas Mandiri: Implementasi Algoritma Sorting Menggunakan TypeScript",
-    description:
-      "Buat implementasi Quick Sort dan Merge Sort. Tuliskan analisis efisiensi waktu eksekusi terhadap 5.000 elemen data acak.",
-    tipe: "MANDIRI",
-    dueDate: new Date(now + 10 * day),
-    maxScore: 100,
-    kelasId: kelasXI.id,
-    authorId: guru.id,
-  });
-
-  // 7. UJIAN-UJIAN (Lengkap 3 TIPE UJIAN)
-  // UJIAN TIPE 1: Pilihan Ganda (MULTIPLE_CHOICE)
-  const [examPG] = await db
-    .insert(ujian)
-    .values({
-      title: "UTS Pilihan Ganda - Sains Terapan & Logika Komputasi",
-      tipe: "MULTIPLE_CHOICE",
-      startTime: new Date(now - 2 * 60 * 60 * 1000),
-      endTime: new Date(now + 14 * day),
-      durationMinutes: 60,
-      kelasId: kelasX.id,
-      authorId: guru.id,
-    })
-    .returning();
-
-  const [examPGSoal1, examPGSoal2, examPGSoal3, examPGSoal4] = await db
+  const uasSoalList = await db
     .insert(soal)
     .values([
       {
-        ujianId: examPG.id,
+        ujianId: uasMixed.id,
         type: "MULTIPLE_CHOICE",
-        question: "Variabel dalam eksperimen sains yang sengaja diubah-ubah oleh peneliti untuk menguji hipotesis disebut...",
-        options: ["Variabel bebas (independen)", "Variabel terikat (dependen)", "Variabel kontrol", "Variabel pengganggu"],
+        question: "Prinsip arsitektur perangkat lunak yang memisahkan tanggung jawab penulisan query (Command) dan pembacaan data (Query) adalah...",
+        options: ["CQRS (Command Query Responsibility Segregation)", "MVC (Model View Controller)", "Monolithic Layered", "Microkernel"],
         correctAnswer: "A",
-        points: 25,
+        points: 15,
         order: 1,
       },
       {
-        ujianId: examPG.id,
+        ujianId: uasMixed.id,
         type: "MULTIPLE_CHOICE",
-        question: "Rentang nilai pH untuk larutan yang bersifat asam kuat adalah...",
-        options: ["pH 1 - 3", "pH 6 - 8", "pH 9 - 11", "pH 12 - 14"],
+        question: "Tingkat isolasi transaksi database yang paling tinggi dan sepenuhnya mencegah fenomena Phantom Read adalah...",
+        options: ["Serializable", "Repeatable Read", "Read Committed", "Read Uncommitted"],
         correctAnswer: "A",
-        points: 25,
+        points: 15,
         order: 2,
       },
       {
-        ujianId: examPG.id,
+        ujianId: uasMixed.id,
         type: "MULTIPLE_CHOICE",
-        question: "Kompleksitas waktu rata-rata (average time complexity) dari algoritma Binary Search adalah...",
-        options: ["O(log n)", "O(n)", "O(n log n)", "O(n²)"],
+        question: "Metode autentikasi stateless berbasis token yang menyematkan payload digital tersignatur kriptografis adalah...",
+        options: ["JSON Web Token (JWT)", "Server Session Cookie", "Basic Auth", "OAuth1 MAC"],
         correctAnswer: "A",
-        points: 25,
+        points: 15,
         order: 3,
       },
       {
-        ujianId: examPG.id,
+        ujianId: uasMixed.id,
         type: "MULTIPLE_CHOICE",
-        question: "Satuan standar Sistem Internasional (SI) untuk besaran gaya adalah...",
-        options: ["Newton (N)", "Joule (J)", "Watt (W)", "Pascal (Pa)"],
+        question: "Strategi indexing yang paling efektif untuk mempercepat pencarian teks parsial berskala besar adalah...",
+        options: ["Full-Text Index / GIN Index", "B-Tree Index Biasa", "Hash Index", "Bitmap Index"],
         correctAnswer: "A",
-        points: 25,
+        points: 15,
         order: 4,
+      },
+      {
+        ujianId: uasMixed.id,
+        type: "ESSAY",
+        question: "Uraikan perancangan sistem penanganan konkurensi (Concurrency Control) pada sistem pendaftaran kelas menggunakan Optimistic Locking vs Pessimistic Locking!",
+        rubric: "Penjelasan Optimistic Locking via versi data (10 poin), Pessimistic Locking via SELECT FOR UPDATE (10 poin).",
+        points: 20,
+        order: 5,
+      },
+      {
+        ujianId: uasMixed.id,
+        type: "ESSAY",
+        question: "Jelaskan arsitektur caching multi-layer (Memory Cache, Redis, HTTP CDN) untuk mereduksi beban query pada database terpusat!",
+        rubric: "Kesesuaian strategi cache invalidation (10 poin), contoh kasus data leaderboard/kuis (10 poin).",
+        points: 20,
+        order: 6,
       },
     ])
     .returning();
 
-  // Attempt Ujian PG oleh Ahmad Rizki
+  // Attempt Ujian oleh Siswa 1 (Ahmad Rizki)
   await db.insert(ujianAttempts).values({
-    ujianId: examPG.id,
-    studentId: siswa1.id,
+    ujianId: uasMixed.id,
+    studentId: insertedStudents[0].id,
     answers: {
-      [examPGSoal1.id]: "A",
-      [examPGSoal2.id]: "A",
-      [examPGSoal3.id]: "A",
-      [examPGSoal4.id]: "A",
+      [uasSoalList[0].id]: "A",
+      [uasSoalList[1].id]: "A",
+      [uasSoalList[2].id]: "A",
+      [uasSoalList[3].id]: "A",
+      [uasSoalList[4].id]: "Optimistic locking menggunakan kolom version_number untuk mendeteksi perubahan sebelum commit, sangat efisien untuk operasi baca tinggi. Pessimistic locking menggunakan row lock database untuk mencegah akses paralel pada transaksi kritis.",
+      [uasSoalList[5].id]: "Caching multi-layer membagi beban: L1 di memory aplikasi, L2 di Redis terdistribusi, dan L3 di CDN edge. Teknik stale-while-revalidate menjaga ketersediaan data secara instan.",
     },
-    score: 100,
+    score: 96,
+    feedback: "Analisis konkurensi database dan strategi caching sangat matang dan mendalam!",
     startedAt: new Date(now - 1 * day),
-    submittedAt: new Date(now - 1 * day + 32 * 60 * 1000),
+    submittedAt: new Date(now - 1 * day + 65 * 60 * 1000),
   });
 
-  // UJIAN TIPE 2: Essay (ESSAY)
-  const [examEssay] = await db
-    .insert(ujian)
-    .values({
-      title: "Ujian Essay Teori - Rekayasa Algoritma & Perancangan Basis Data",
-      tipe: "ESSAY",
-      startTime: new Date(now - 1 * 60 * 60 * 1000),
-      endTime: new Date(now + 10 * day),
-      durationMinutes: 75,
-      kelasId: kelasXI.id,
-      authorId: guru.id,
-    })
-    .returning();
+  console.log("✅ Ujian UAS Komprehensif 2 Bulan lengkap dengan bank soal & attempt siswa berhasil dibuat.");
 
-  await db.insert(soal).values([
-    {
-      ujianId: examEssay.id,
-      type: "ESSAY",
-      question: "Bandingkan kelebihan dan kekurangan antara struktur data Stack dan Queue dalam implementasi sistem antrean server!",
-      rubric: "Kesesuaian prinsip LIFO/FIFO (15 poin), contoh kasus sistem server (15 poin), efisiensi memori (10 poin).",
-      points: 40,
-      order: 1,
-    },
-    {
-      ujianId: examEssay.id,
-      type: "ESSAY",
-      question: "Jelaskan langkah demi langkah proses penyeimbangan pohon biner (AVL Tree Rotation) ketika terjadi ketidakseimbangan faktor!",
-      rubric: "Ketepatan penjelasan Single Rotation vs Double Rotation (20 poin), ilustrasi skematis (10 poin).",
-      points: 30,
-      order: 2,
-    },
-    {
-      ujianId: examEssay.id,
-      type: "ESSAY",
-      question: "Mengapa transaksi database harus mematuhi prinsip ACID? Jelaskan risiko jika sifat 'Isolation' dilanggar!",
-      rubric: "Uraian 4 komponen ACID (15 poin), penjelasan dirty read / race condition (15 poin).",
-      points: 30,
-      order: 3,
-    },
-  ]);
-
-  // UJIAN TIPE 3: Campuran (MIXED: PG + Essay)
-  const [examMixed] = await db
-    .insert(ujian)
-    .values({
-      title: "Ujian Komprehensif (Campuran PG & Essay) - Keseimbangan Kimia & Termodinamika",
-      tipe: "MIXED",
-      startTime: new Date(now - 30 * 60 * 1000),
-      endTime: new Date(now + 12 * day),
-      durationMinutes: 90,
-      kelasId: kelasX.id,
-      authorId: guru.id,
-    })
-    .returning();
-
-  await db.insert(soal).values([
-    // Bagian Pilihan Ganda
-    {
-      ujianId: examMixed.id,
-      type: "MULTIPLE_CHOICE",
-      question: "Menurut Asas Le Chatelier, jika tekanan pada sistem kesetimbangan gas diperbesar, maka kesetimbangan akan bergeser ke arah...",
-      options: [
-        "Jumlah koefisien gas yang lebih kecil",
-        "Jumlah koefisien gas yang lebih besar",
-        "Reaksi endoterm",
-        "Tidak mengalami pergeseran sama sekali",
-      ],
-      correctAnswer: "A",
-      points: 20,
-      order: 1,
-    },
-    {
-      ujianId: examMixed.id,
-      type: "MULTIPLE_CHOICE",
-      question: "Hukum Termodinamika Pertama pada dasarnya menyatakan prinsip...",
-      options: [
-        "Hukum Kekekalan Energi",
-        "Peningkatan Entropi Semesta",
-        "Ketiadaan Nol Mutlak",
-        "Percepatan Gravitasi Universal",
-      ],
-      correctAnswer: "A",
-      points: 20,
-      order: 2,
-    },
-    {
-      ujianId: examMixed.id,
-      type: "MULTIPLE_CHOICE",
-      question: "Zat yang berfungsi mempercepat laju reaksi kimia tanpa ikut terkonsumsi permanen adalah...",
-      options: ["Katalisator", "Inhibitor", "Reaktan pembatas", "Indikator universal"],
-      correctAnswer: "A",
-      points: 20,
-      order: 3,
-    },
-    // Bagian Essay
-    {
-      ujianId: examMixed.id,
-      type: "ESSAY",
-      question: "Hitung perubahan entalpi pembentukan standar (ΔHf°) dan jelaskan diagram energi reaksi endoterm berikut!",
-      rubric: "Rumus hukum Hess (10 poin), perhitungan angka benar (10 poin).",
-      points: 20,
-      order: 4,
-    },
-    {
-      ujianId: examMixed.id,
-      type: "ESSAY",
-      question: "Uraikan penerapan prinsip kesetimbangan kimia dalam proses Haber-Bosch untuk sintesis amonia industri!",
-      rubric: "Kondisi suhu kompromi (10 poin), pengaruh katalis besi (10 poin).",
-      points: 20,
-      order: 5,
-    },
-  ]);
-
-  // 8. Notifikasi Sistem
+  // =========================================================================
+  // 8. NOTIFIKASI & TIKET
+  // =========================================================================
   await db.insert(notifications).values([
     {
-      userId: siswa1.id,
-      title: "Tugas Baru: Kuis Pilihan Ganda",
-      message: "Dr. Budi Santoso telah menambahkan Kuis Pilihan Ganda untuk kelas X MIPA 1.",
+      userId: insertedStudents[0].id,
+      title: "Proyek Kelompok Capstone Diterbitkan",
+      message: "Dr. Budi Santoso menerbitkan Proyek Capstone 2 Bulan. Anda tergabung dalam Kelompok 1 (Alpha Dev).",
       isRead: false,
     },
     {
-      userId: siswa1.id,
-      title: "Nilai Tugas Diperbarui",
-      message: "Kuis Pilihan Ganda Anda telah dinilai otomatis dengan skor 100/100.",
-      isRead: false,
-    },
-    {
-      userId: siswa2.id,
-      title: "Ujian Campuran Siap Dikerjakan",
-      message: "Ujian Komprehensif (Campuran PG & Essay) telah dibuka di kelas X MIPA 1.",
+      userId: insertedStudents[0].id,
+      title: "Hasil Penilaian Proyek Kelompok",
+      message: "Proyek Kelompok 1 (Alpha Dev) telah dinilai guru dengan skor 96/100.",
       isRead: false,
     },
     {
       userId: guru.id,
-      title: "Pengumpulan Tugas Masuk",
-      message: "Kelompok Alpha - BioSains telah mengumpulkan proposal tugas kelompok.",
-      isRead: false,
+      title: "Seluruh Kelompok Telah Mengumpulkan Proyek",
+      message: "Kelompok 1 s/d Kelompok 5 telah mengirimkan laporan capstone dan evaluasi sejawat.",
+      isRead: true,
     },
     {
       userId: admin.id,
-      title: "Sistem Terrawise Beroperasi Penuh",
-      message: "4 Tipe Tugas dan 3 Tipe Ujian telah aktif dan terkonfigurasi pada basis data.",
+      title: "Kelas XI MIPA 2 Siap Digunakan",
+      message: "30 Siswa, 4 materi bab, 4 tipe tugas berdurasi 2 bulan, dan ujian telah aktif di database.",
       isRead: true,
     },
   ]);
 
-  // 9. Tiket Keluhan & Bantuan
   await db.insert(complaints).values([
     {
-      userId: siswa1.id,
-      title: "Kendala Mengunggah Lampiran Tugas Format PDF",
-      message:
-        "Saat mencoba mengunggah dokumen PDF ukuran 3 MB, proses upload memakan waktu lebih dari 2 menit. Mohon informasi batasan ukuran file.",
+      userId: insertedStudents[0].id,
+      title: "Konsultasi Teknis Repositori Proyek Capstone",
+      message: "Apakah kelompok diperbolehkan menggunakan library UI Tailwind dan database PostgreSQL lokal untuk modul autentikasi?",
       category: "Tugas & Ujian",
       priority: "MEDIUM",
-      status: "IN_PROGRESS",
-      reply:
-        "Batas ukuran upload file telah dioptimalkan hingga 10 MB per dokumen. Silakan coba kembali mengunggah berkas Anda.",
+      status: "RESOLVED",
+      reply: "Sangat diperbolehkan! Silakan gunakan stack teknologi modern yang relevan dengan kebutuhan proyek kelompok Anda.",
     },
   ]);
 
-  console.log("✅ Seeding Terrawise.id LMS murni (4 Tipe Tugas & 3 Tipe Ujian) BERHASIL!");
-  console.log("\n--- AKUN DEMO TERRAWISE.ID ---");
-  console.log("👑 Super Admin : superadmin@terrawise.id | password: superadmin123");
-  console.log("⚙️ Admin       : admin@terrawise.id      | password: admin123");
-  console.log("👨‍🏫 Guru        : guru@terrawise.id       | password: guru123");
-  console.log("🎓 Siswa 1     : siswa@terrawise.id      | password: siswa123");
-  console.log("🎓 Siswa 2     : siswa2@terrawise.id     | password: siswa123");
+  console.log("\n=======================================================");
+  console.log("🎉 SEEDING DATA BERHASIL DENGAN SUKSES! 🎉");
+  console.log("=======================================================");
+  console.log(`📚 Kelas Target : XI MIPA 2 - Rekayasa Perangkat Lunak & Logika`);
+  console.log(`👨‍🏫 Guru Pengampu: Dr. Budi Santoso, M.T. (guru@terrawise.id)`);
+  console.log(`👥 Total Siswa  : 30 Siswa Aktif Terdaftar (Password: siswa123)`);
+  console.log(`⏱️ Rentang Waktu: 2 BULAN PENUH (Deadline: ${twoMonthsDue.toLocaleDateString("id-ID")})`);
+  console.log(`🤝 Kelompok     : 5 Kelompok Proyek (Alpha, Beta, Gamma, Delta, Epsilon)`);
+  console.log(`⭐ Peer Review  : Instrumen Evaluasi Sejawat Aktif & Terekam di DB`);
+  console.log(`💯 Penilaian    : Nilai Guru, Feedback, & Submissions Masuk ke DB`);
+  console.log("=======================================================\n");
+
   process.exit(0);
 }
 
