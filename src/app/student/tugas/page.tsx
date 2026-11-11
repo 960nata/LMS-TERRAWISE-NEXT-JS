@@ -3,26 +3,28 @@ import { db } from "@/lib/db";
 import { tugas, kelas, enrollments, tugasSubmissions } from "@/lib/db/schema";
 import { desc, eq } from "drizzle-orm";
 import Link from "next/link";
-import { submitTugas } from "./actions";
 import {
-  ActionModal,
   Badge,
   EmptyState,
   Icon,
-  Label,
   PageHeader,
   StatCard,
   StatGrid,
   formatDate,
-  inputClass,
   primaryButtonClass,
 } from "@/components/ui";
 
 export const instant = false;
 
-export default async function StudentTugasPage() {
+export default async function StudentTugasPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ filter?: string }>;
+}) {
   const session = await auth();
   const studentId = (session?.user as { id: string } | null)?.id as string;
+  const resolvedParams = await searchParams;
+  const activeFilter = resolvedParams?.filter;
 
   const rows = await db
     .select({
@@ -45,6 +47,15 @@ export default async function StudentTugasPage() {
   const now = new Date();
   const done = rows.filter((t) => submissionMap.has(t.id)).length;
   const graded = rows.filter((t) => submissionMap.get(t.id)?.score != null).length;
+
+  const countMC = rows.filter((t) => t.tipe === "MULTIPLE_CHOICE").length;
+  const countEssay = rows.filter((t) => t.tipe === "ESSAY").length;
+  const countMandiri = rows.filter((t) => t.tipe === "MANDIRI").length;
+  const countKelompok = rows.filter((t) => t.tipe === "KELOMPOK").length;
+
+  const displayedRows = activeFilter
+    ? rows.filter((t) => t.tipe === activeFilter)
+    : rows;
 
   const tipeBadge = (tipe: string) => {
     switch (tipe) {
@@ -74,16 +85,69 @@ export default async function StudentTugasPage() {
         <StatCard value={graded} label="Sudah Dinilai" />
       </StatGrid>
 
-      {rows.length === 0 ? (
+      {/* Filter Tabs by Task Type */}
+      <div className="mt-8 mb-6 flex flex-wrap items-center gap-1.5 border-b border-gray-200 pb-3">
+        <Link
+          href="/student/tugas"
+          className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
+            !activeFilter
+              ? "bg-black text-white"
+              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+          }`}
+        >
+          Semua ({rows.length})
+        </Link>
+        <Link
+          href="/student/tugas?filter=MULTIPLE_CHOICE"
+          className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
+            activeFilter === "MULTIPLE_CHOICE"
+              ? "bg-black text-white"
+              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+          }`}
+        >
+          Pilihan Ganda ({countMC})
+        </Link>
+        <Link
+          href="/student/tugas?filter=ESSAY"
+          className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
+            activeFilter === "ESSAY"
+              ? "bg-black text-white"
+              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+          }`}
+        >
+          Essay ({countEssay})
+        </Link>
+        <Link
+          href="/student/tugas?filter=MANDIRI"
+          className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
+            activeFilter === "MANDIRI"
+              ? "bg-black text-white"
+              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+          }`}
+        >
+          Mandiri ({countMandiri})
+        </Link>
+        <Link
+          href="/student/tugas?filter=KELOMPOK"
+          className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
+            activeFilter === "KELOMPOK"
+              ? "bg-black text-white"
+              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+          }`}
+        >
+          Kelompok ({countKelompok})
+        </Link>
+      </div>
+
+      {displayedRows.length === 0 ? (
         <div className="rounded-xl border border-gray-100 md:rounded-2xl">
-          <EmptyState icon="assignment" text="Tidak ada tugas untuk kelas Anda saat ini." />
+          <EmptyState icon="assignment" text={`Tidak ada tugas${activeFilter ? ` tipe ${activeFilter}` : ""} untuk kelas Anda.`} />
         </div>
       ) : (
         <div className="space-y-4 md:space-y-6">
-          {rows.map((t) => {
+          {displayedRows.map((t) => {
             const sub = submissionMap.get(t.id);
             const late = !sub && t.dueDate < now;
-            const isQuestionBased = t.tipe === "MULTIPLE_CHOICE" || t.tipe === "ESSAY";
 
             return (
               <div key={t.id} className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm lg:rounded-2xl">
@@ -125,14 +189,12 @@ export default async function StudentTugasPage() {
                         <p className="font-bold text-black text-sm">
                           {sub.score != null ? `Nilai: ${sub.score} / ${t.maxScore}` : "Status: Menunggu penilaian guru"}
                         </p>
-                        {isQuestionBased && (
-                          <Link
-                            href={`/student/tugas/${t.id}`}
-                            className="rounded border border-black bg-white px-3 py-1 font-bold text-black hover:bg-black hover:text-white transition-colors"
-                          >
-                            Lihat Lembar Jawaban &amp; Koreksi →
-                          </Link>
-                        )}
+                        <Link
+                          href={`/student/tugas/${t.id}`}
+                          className="rounded border border-black bg-white px-3 py-1 font-bold text-black hover:bg-black hover:text-white transition-colors text-xs"
+                        >
+                          Lihat Detail &amp; Lembar Jawaban →
+                        </Link>
                       </div>
 
                       {sub.groupName && (
@@ -159,111 +221,19 @@ export default async function StudentTugasPage() {
                     </div>
                   ) : (
                     <div className="pt-2">
-                      {isQuestionBased ? (
-                        <Link
-                          href={`/student/tugas/${t.id}`}
-                          className={`${primaryButtonClass} inline-flex items-center gap-1.5`}
-                        >
-                          <Icon name="edit_note" size={16} />
-                          {t.tipe === "MULTIPLE_CHOICE" ? "Kerjakan Kuis Pilihan Ganda →" : "Kerjakan Soal Essay →"}
-                        </Link>
-                      ) : t.tipe === "KELOMPOK" ? (
-                        <ActionModal
-                          triggerText="Kumpulkan Tugas Kelompok"
-                          triggerIcon="group"
-                          title={`Pengumpulan Proyek Kelompok: ${t.title}`}
-                          description={`Maksimal nilai: ${t.maxScore} poin · Kelas: ${t.kelasName}`}
-                        >
-                          <form action={submitTugas} className="space-y-4">
-                            <input type="hidden" name="tugasId" value={t.id} />
-                            <div>
-                              <Label htmlFor={`groupName-${t.id}`}>Nama Kelompok</Label>
-                              <input
-                                id={`groupName-${t.id}`}
-                                name="groupName"
-                                placeholder="cth: Kelompok Alpha - BioSains"
-                                required
-                                className={inputClass}
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor={`groupMembers-${t.id}`}>Daftar Anggota Kelompok</Label>
-                              <textarea
-                                id={`groupMembers-${t.id}`}
-                                name="groupMembers"
-                                placeholder="1. Ahmad Rizki (Ketua)&#10;2. Siti Nurhaliza&#10;3. Budi Santoso"
-                                required
-                                rows={3}
-                                className={inputClass}
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor={`answer-${t.id}`}>Ringkasan Hasil Kerja / Laporan Proyek</Label>
-                              <textarea
-                                id={`answer-${t.id}`}
-                                name="answerText"
-                                placeholder="Tuliskan uraian hasil kerja kelompok, metodologi, dan temuan utama..."
-                                required
-                                rows={4}
-                                className={inputClass}
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor={`url-${t.id}`}>Tautan Repository / Dokumen Project</Label>
-                              <input
-                                id={`url-${t.id}`}
-                                type="url"
-                                name="fileUrl"
-                                placeholder="https://github.com/... atau https://drive.google.com/..."
-                                required
-                                className={inputClass}
-                              />
-                            </div>
-                            <div className="pt-2">
-                              <button type="submit" className={`${primaryButtonClass} w-full`}>
-                                <Icon name="send" size={16} /> Kumpulkan Tugas Kelompok Sekarang
-                              </button>
-                            </div>
-                          </form>
-                        </ActionModal>
-                      ) : (
-                        <ActionModal
-                          triggerText="Kerjakan / Kumpulkan Tugas Mandiri"
-                          triggerIcon="edit_note"
-                          title={`Kumpulkan Tugas: ${t.title}`}
-                          description={`Maksimal nilai: ${t.maxScore} poin · Kelas: ${t.kelasName}`}
-                        >
-                          <form action={submitTugas} className="space-y-4">
-                            <input type="hidden" name="tugasId" value={t.id} />
-                            <div>
-                              <Label htmlFor={`answer-${t.id}`}>Jawaban Deskriptif / Uraian</Label>
-                              <textarea
-                                id={`answer-${t.id}`}
-                                name="answerText"
-                                placeholder="Tuliskan uraian hasil analisis, pengerjaan tugas, atau rangkuman kamu..."
-                                required
-                                rows={4}
-                                className={inputClass}
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor={`url-${t.id}`}>Tautan Lampiran Dokumen / Repository (Opsional)</Label>
-                              <input
-                                id={`url-${t.id}`}
-                                type="url"
-                                name="fileUrl"
-                                placeholder="https://drive.google.com/... atau https://github.com/..."
-                                className={inputClass}
-                              />
-                            </div>
-                            <div className="pt-2">
-                              <button type="submit" className={`${primaryButtonClass} w-full`}>
-                                <Icon name="send" size={16} /> Kumpulkan Tugas Sekarang
-                              </button>
-                            </div>
-                          </form>
-                        </ActionModal>
-                      )}
+                      <Link
+                        href={`/student/tugas/${t.id}`}
+                        className={`${primaryButtonClass} inline-flex items-center gap-1.5`}
+                      >
+                        <Icon name="edit_note" size={16} />
+                        {t.tipe === "MULTIPLE_CHOICE"
+                          ? "Kerjakan Kuis Pilihan Ganda →"
+                          : t.tipe === "ESSAY"
+                          ? "Kerjakan Soal Essay →"
+                          : t.tipe === "KELOMPOK"
+                          ? "Kumpulkan Proyek Kelompok →"
+                          : "Kerjakan Tugas Mandiri →"}
+                      </Link>
                     </div>
                   )}
                 </div>

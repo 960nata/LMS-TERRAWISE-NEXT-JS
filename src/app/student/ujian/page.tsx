@@ -7,9 +7,15 @@ import { Badge, DataTable, EmptyState, Icon, PageHeader, StatCard, StatGrid, for
 
 export const instant = false;
 
-export default async function StudentUjianListPage() {
+export default async function StudentUjianListPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ filter?: string }>;
+}) {
   const session = await auth();
   const studentId = (session?.user as { id: string } | null)?.id as string;
+  const resolvedParams = await searchParams;
+  const activeFilter = resolvedParams?.filter;
 
   const [rows, attempts] = await Promise.all([
     db
@@ -34,6 +40,14 @@ export default async function StudentUjianListPage() {
   const now = new Date();
   const done = rows.filter((u) => attemptMap.has(u.id)).length;
   const live = rows.filter((u) => !attemptMap.has(u.id) && u.startTime <= now && now <= u.endTime).length;
+
+  const countMC = rows.filter((u) => u.tipe === "MULTIPLE_CHOICE").length;
+  const countEssay = rows.filter((u) => u.tipe === "ESSAY").length;
+  const countMixed = rows.filter((u) => u.tipe === "MIXED").length;
+
+  const displayedRows = activeFilter
+    ? rows.filter((u) => u.tipe === activeFilter)
+    : rows;
 
   const tipeBadge = (tipe: string) => {
     switch (tipe) {
@@ -60,9 +74,53 @@ export default async function StudentUjianListPage() {
         <StatCard value={done} label="Selesai" />
       </StatGrid>
 
-      {rows.length === 0 ? (
+      {/* Filter Tabs by Exam Type */}
+      <div className="mt-8 mb-6 flex flex-wrap items-center gap-1.5 border-b border-gray-200 pb-3">
+        <Link
+          href="/student/ujian"
+          className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
+            !activeFilter
+              ? "bg-black text-white"
+              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+          }`}
+        >
+          Semua ({rows.length})
+        </Link>
+        <Link
+          href="/student/ujian?filter=MULTIPLE_CHOICE"
+          className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
+            activeFilter === "MULTIPLE_CHOICE"
+              ? "bg-black text-white"
+              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+          }`}
+        >
+          Pilihan Ganda ({countMC})
+        </Link>
+        <Link
+          href="/student/ujian?filter=ESSAY"
+          className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
+            activeFilter === "ESSAY"
+              ? "bg-black text-white"
+              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+          }`}
+        >
+          Essay ({countEssay})
+        </Link>
+        <Link
+          href="/student/ujian?filter=MIXED"
+          className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
+            activeFilter === "MIXED"
+              ? "bg-black text-white"
+              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+          }`}
+        >
+          Campuran ({countMixed})
+        </Link>
+      </div>
+
+      {displayedRows.length === 0 ? (
         <div className="rounded-xl border border-gray-100 md:rounded-2xl">
-          <EmptyState icon="quiz" text="Tidak ada ujian untuk kelas Anda saat ini." />
+          <EmptyState icon="quiz" text={`Tidak ada ujian${activeFilter ? ` tipe ${activeFilter}` : ""} untuk kelas Anda.`} />
         </div>
       ) : (
         <DataTable
@@ -74,7 +132,7 @@ export default async function StudentUjianListPage() {
             { label: "Aksi", className: "text-right" },
           ]}
         >
-          {rows.map((u, i) => {
+          {displayedRows.map((u, i) => {
             const attempt = attemptMap.get(u.id);
             const upcoming = now < u.startTime;
             const closed = now > u.endTime;

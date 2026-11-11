@@ -22,39 +22,69 @@ export async function submitTugasQuestions(tugasId: string, formData: FormData) 
   if (!task) throw new Error("Tugas tidak ditemukan atau Anda tidak terdaftar di kelas ini");
   if (new Date() > task.dueDate) throw new Error("Batas waktu pengumpulan tugas sudah berakhir");
 
-  const soalList = await db.select().from(tugasSoal).where(eq(tugasSoal.tugasId, tugasId));
-  const answers: Record<string, string> = {};
-  let rawScore = 0;
-  let totalPoints = 0;
+  if (task.tipe === "MANDIRI") {
+    const answerText = (formData.get("answerText") as string)?.trim() ?? "";
+    const fileUrl = (formData.get("fileUrl") as string)?.trim() || null;
 
-  for (const s of soalList) {
-    totalPoints += s.points;
-    const ans = (formData.get(`soal_${s.id}`) as string)?.trim() ?? "";
-    answers[s.id] = ans;
+    await db.insert(tugasSubmissions).values({
+      tugasId,
+      studentId,
+      answerText,
+      fileUrl,
+      score: null,
+      submittedAt: new Date(),
+    });
+  } else if (task.tipe === "KELOMPOK") {
+    const groupName = (formData.get("groupName") as string)?.trim() ?? "Kelompok";
+    const groupMembers = (formData.get("groupMembers") as string)?.trim() ?? "";
+    const answerText = (formData.get("answerText") as string)?.trim() ?? "";
+    const fileUrl = (formData.get("fileUrl") as string)?.trim() || null;
 
-    if (s.type === "MULTIPLE_CHOICE" && ans.toUpperCase() === s.correctAnswer?.toUpperCase()) {
-      rawScore += s.points;
+    await db.insert(tugasSubmissions).values({
+      tugasId,
+      studentId,
+      groupName,
+      groupMembers,
+      answerText,
+      fileUrl,
+      score: null,
+      submittedAt: new Date(),
+    });
+  } else {
+    const soalList = await db.select().from(tugasSoal).where(eq(tugasSoal.tugasId, tugasId));
+    const answers: Record<string, string> = {};
+    let rawScore = 0;
+    let totalPoints = 0;
+
+    for (const s of soalList) {
+      totalPoints += s.points;
+      const ans = (formData.get(`soal_${s.id}`) as string)?.trim() ?? "";
+      answers[s.id] = ans;
+
+      if (s.type === "MULTIPLE_CHOICE" && ans.toUpperCase() === s.correctAnswer?.toUpperCase()) {
+        rawScore += s.points;
+      }
     }
-  }
 
-  // If purely MULTIPLE_CHOICE, auto-calculate scaled score based on maxScore
-  let finalScore: number | null = null;
-  if (task.tipe === "MULTIPLE_CHOICE") {
-    finalScore = totalPoints > 0 ? Math.round((rawScore / totalPoints) * task.maxScore) : 100;
-  }
+    // If purely MULTIPLE_CHOICE, auto-calculate scaled score based on maxScore
+    let finalScore: number | null = null;
+    if (task.tipe === "MULTIPLE_CHOICE") {
+      finalScore = totalPoints > 0 ? Math.round((rawScore / totalPoints) * task.maxScore) : 100;
+    }
 
-  await db.insert(tugasSubmissions).values({
-    tugasId,
-    studentId,
-    answers,
-    score: finalScore,
-    answerText:
-      task.tipe === "MULTIPLE_CHOICE"
-        ? `Kuis Pilihan Ganda: Skor otomatis ${finalScore}/${task.maxScore}`
-        : "Jawaban essay telah dikumpulkan dan menunggu koreksi guru.",
-    submittedAt: new Date(),
-    gradedAt: task.tipe === "MULTIPLE_CHOICE" ? new Date() : null,
-  });
+    await db.insert(tugasSubmissions).values({
+      tugasId,
+      studentId,
+      answers,
+      score: finalScore,
+      answerText:
+        task.tipe === "MULTIPLE_CHOICE"
+          ? `Kuis Pilihan Ganda: Skor otomatis ${finalScore}/${task.maxScore}`
+          : "Jawaban essay telah dikumpulkan dan menunggu koreksi guru.",
+      submittedAt: new Date(),
+      gradedAt: task.tipe === "MULTIPLE_CHOICE" ? new Date() : null,
+    });
+  }
 
   revalidatePath(`/student/tugas/${tugasId}`);
   revalidatePath("/student/tugas");

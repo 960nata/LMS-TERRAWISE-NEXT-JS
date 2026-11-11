@@ -2,10 +2,9 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { tugas, kelas, tugasSubmissions, tugasSoal, users } from "@/lib/db/schema";
 import { count, desc, eq } from "drizzle-orm";
-import { createTugas, deleteTugas, gradeSubmissionAction } from "./actions";
+import { deleteTugas, gradeSubmissionAction } from "./actions";
 import Link from "next/link";
 import {
-  ActionModal,
   Badge,
   DataTable,
   EmptyState,
@@ -23,7 +22,11 @@ import {
 
 export const instant = false;
 
-export default async function TugasPage() {
+export default async function TugasPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ filter?: string }>;
+}) {
   const session = await auth();
   const user = session?.user as { id: string; role: string };
   const teacherId = user.id;
@@ -35,8 +38,10 @@ export default async function TugasPage() {
       ? "/admin"
       : "/teacher";
 
-  const [myKelas, myTugas, studentSubmissions] = await Promise.all([
-    db.select().from(kelas).where(classFilter),
+  const resolvedParams = await searchParams;
+  const activeFilter = resolvedParams?.filter;
+
+  const [myTugas, studentSubmissions] = await Promise.all([
     db
       .select({
         id: tugas.id,
@@ -111,94 +116,28 @@ export default async function TugasPage() {
     }
   };
 
+  const countMC = myTugas.filter((t) => t.tipe === "MULTIPLE_CHOICE").length;
+  const countEssay = myTugas.filter((t) => t.tipe === "ESSAY").length;
+  const countMandiri = myTugas.filter((t) => t.tipe === "MANDIRI").length;
+  const countKelompok = myTugas.filter((t) => t.tipe === "KELOMPOK").length;
+
+  const displayedTugas = activeFilter
+    ? myTugas.filter((t) => t.tipe === activeFilter)
+    : myTugas;
+
   return (
     <>
       <PageHeader
         title="Manajemen Tugas"
         description="Kelola 4 tipe tugas (Pilihan Ganda, Essay, Mandiri, Kelompok), atur bank soal, dan evaluasi hasil belajar siswa."
         action={
-          <div className="flex flex-wrap items-center gap-2">
-            <Link
-              href={`${basePath}/tugas/create`}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-black bg-black px-4 py-2.5 text-xs md:text-sm font-bold text-white transition-all hover:bg-neutral-800 shadow-sm"
-            >
-              <Icon name="add" size={18} />
-              <span>+ Buat Tugas Baru</span>
-            </Link>
-            <ActionModal
-              triggerText="Buka Modal"
-              triggerIcon="open_in_new"
-              title="Tambah Tugas Baru (4 Tipe Pilihan)"
-              description="Buat penugasan baru dengan pilihan tipe Pilihan Ganda, Essay, Mandiri, atau Kelompok."
-            >
-            <form action={createTugas} className="space-y-4">
-              <div>
-                <Label htmlFor="kelasId">Kelas Tujuan</Label>
-                <select id="kelasId" name="kelasId" required className={inputClass}>
-                  <option value="">Pilih Kelas</option>
-                  {myKelas.map((k) => (
-                    <option key={k.id} value={k.id}>
-                      {k.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <Label htmlFor="tipe">Tipe Tugas</Label>
-                <select id="tipe" name="tipe" required className={inputClass}>
-                  <option value="MULTIPLE_CHOICE">1. Pilihan Ganda (Kuis Auto-Grading)</option>
-                  <option value="ESSAY">2. Soal Essay (Pertanyaan Uraian & Koreksi Manual)</option>
-                  <option value="MANDIRI">3. Mandiri (Tugas Individu / Upload File)</option>
-                  <option value="KELOMPOK">4. Kelompok (Proyek Kolaborasi / Tugas Kelompok)</option>
-                </select>
-                <p className="mt-1 text-[11px] text-gray-500">
-                  Untuk tipe Pilihan Ganda dan Essay, Anda dapat menambahkan daftar pertanyaan soal di halaman kelola setelah tugas dibuat.
-                </p>
-              </div>
-
-              <div>
-                <Label htmlFor="title">Judul Tugas</Label>
-                <input
-                  id="title"
-                  name="title"
-                  placeholder="cth: Kuis Logika Algoritma Dasar atau Proyek Analisis Sains"
-                  required
-                  className={inputClass}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="description">Deskripsi &amp; Petunjuk Pengerjaan</Label>
-                <textarea
-                  id="description"
-                  name="description"
-                  placeholder="Tuliskan petunjuk pengerjaan tugas, kriteria penilaian, atau panduan kelompok..."
-                  required
-                  rows={3}
-                  className={inputClass}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="dueDate">Batas Waktu (Deadline)</Label>
-                  <input id="dueDate" name="dueDate" type="datetime-local" required className={inputClass} />
-                </div>
-                <div>
-                  <Label htmlFor="maxScore">Nilai Maksimal</Label>
-                  <input id="maxScore" name="maxScore" type="number" defaultValue={100} className={inputClass} />
-                </div>
-              </div>
-
-              <div className="pt-2">
-                <button type="submit" className={`${primaryButtonClass} w-full`}>
-                  <Icon name="add" size={18} /> Simpan &amp; Terbitkan Tugas
-                </button>
-              </div>
-            </form>
-          </ActionModal>
-          </div>
+          <Link
+            href={`${basePath}/tugas/create`}
+            className="inline-flex items-center gap-2 rounded-xl border border-black bg-black px-4 py-2.5 text-xs md:text-sm font-bold text-white transition-all hover:bg-neutral-800 shadow-sm"
+          >
+            <Icon name="add" size={18} />
+            <span>+ Buat Tugas Baru</span>
+          </Link>
         }
       />
 
@@ -209,68 +148,199 @@ export default async function TugasPage() {
         <StatCard value={gradedSubs} label="Sudah Dinilai" />
       </StatGrid>
 
-      {/* Ringkasan 4 Tipe Tugas dengan Quick Action Buat */}
-      <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <Link
-          href={`${basePath}/tugas/create?tipe=MULTIPLE_CHOICE`}
-          className="group rounded-xl border border-black bg-white p-3.5 text-center transition-all hover:bg-black hover:text-white"
-        >
-          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 group-hover:text-gray-300">Tipe 1</p>
-          <p className="font-bold text-xs sm:text-sm mt-0.5">Pilihan Ganda</p>
-          <p className="text-[10px] text-gray-500 group-hover:text-gray-300 mt-1">
-            {myTugas.filter((t) => t.tipe === "MULTIPLE_CHOICE").length} Tugas
-          </p>
-          <span className="mt-2 inline-block rounded-md bg-gray-100 group-hover:bg-white group-hover:text-black px-2 py-0.5 text-[10px] font-bold">
-            + Buat PG
-          </span>
-        </Link>
-        <Link
-          href={`${basePath}/tugas/create?tipe=ESSAY`}
-          className="group rounded-xl border border-black bg-white p-3.5 text-center transition-all hover:bg-black hover:text-white"
-        >
-          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 group-hover:text-gray-300">Tipe 2</p>
-          <p className="font-bold text-xs sm:text-sm mt-0.5">Soal Essay</p>
-          <p className="text-[10px] text-gray-500 group-hover:text-gray-300 mt-1">
-            {myTugas.filter((t) => t.tipe === "ESSAY").length} Tugas
-          </p>
-          <span className="mt-2 inline-block rounded-md bg-gray-100 group-hover:bg-white group-hover:text-black px-2 py-0.5 text-[10px] font-bold">
-            + Buat Essay
-          </span>
-        </Link>
-        <Link
-          href={`${basePath}/tugas/create?tipe=MANDIRI`}
-          className="group rounded-xl border border-black bg-white p-3.5 text-center transition-all hover:bg-black hover:text-white"
-        >
-          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 group-hover:text-gray-300">Tipe 3</p>
-          <p className="font-bold text-xs sm:text-sm mt-0.5">Tugas Mandiri</p>
-          <p className="text-[10px] text-gray-500 group-hover:text-gray-300 mt-1">
-            {myTugas.filter((t) => t.tipe === "MANDIRI").length} Tugas
-          </p>
-          <span className="mt-2 inline-block rounded-md bg-gray-100 group-hover:bg-white group-hover:text-black px-2 py-0.5 text-[10px] font-bold">
-            + Buat Mandiri
-          </span>
-        </Link>
-        <Link
-          href={`${basePath}/tugas/create?tipe=KELOMPOK`}
-          className="group rounded-xl border border-black bg-white p-3.5 text-center transition-all hover:bg-black hover:text-white"
-        >
-          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 group-hover:text-gray-300">Tipe 4</p>
-          <p className="font-bold text-xs sm:text-sm mt-0.5">Proyek Kelompok</p>
-          <p className="text-[10px] text-gray-500 group-hover:text-gray-300 mt-1">
-            {myTugas.filter((t) => t.tipe === "KELOMPOK").length} Tugas
-          </p>
-          <span className="mt-2 inline-block rounded-md bg-gray-100 group-hover:bg-white group-hover:text-black px-2 py-0.5 text-[10px] font-bold">
-            + Buat Kelompok
-          </span>
-        </Link>
-      </div>
-
-      {/* Daftar Tugas Guru */}
+      {/* 4 Model Penugasan Pembelajaran - Prominent Hero Cards */}
       <section className="mt-8">
-        <SectionTitle icon="list_alt" title="Daftar Tugas Pembelajaran" />
-        {myTugas.length === 0 ? (
-          <div className="rounded-xl border border-gray-100 md:rounded-2xl">
-            <EmptyState icon="assignment" text="Belum ada tugas yang dibuat." />
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-black uppercase tracking-tight text-black flex items-center gap-2">
+              <Icon name="dashboard_customize" size={20} /> 4 Model Tugas Pembelajaran
+            </h2>
+            <p className="text-xs text-gray-500">
+              Pilih salah satu dari 4 model tugas di bawah ini untuk membuat penugasan langsung sesuai kurikulum.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Card 1: Pilihan Ganda */}
+          <div className="rounded-2xl border-2 border-black bg-white p-5 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-black text-white">
+                  <Icon name="list_alt" size={20} />
+                </div>
+                <span className="rounded-full bg-black text-white px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider">
+                  Auto-Grading
+                </span>
+              </div>
+              <h3 className="font-black text-sm uppercase tracking-tight text-black">
+                1. Pilihan Ganda
+              </h3>
+              <p className="mt-1 text-xs text-gray-500 leading-relaxed">
+                Kuis evaluasi objektif dengan opsi A, B, C, D dan kunci jawaban terotomatisasi.
+              </p>
+            </div>
+            <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
+              <span className="text-[11px] font-bold text-gray-400">{countMC} Tugas</span>
+              <Link
+                href={`${basePath}/tugas/create?tipe=MULTIPLE_CHOICE`}
+                className="inline-flex items-center gap-1 rounded-lg border border-black bg-black px-2.5 py-1 text-[11px] font-black text-white hover:bg-neutral-800 transition-colors"
+              >
+                + Buat PG →
+              </Link>
+            </div>
+          </div>
+
+          {/* Card 2: Soal Essay */}
+          <div className="rounded-2xl border-2 border-black bg-white p-5 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-black text-white">
+                  <Icon name="edit_note" size={20} />
+                </div>
+                <span className="rounded-full bg-neutral-800 text-white px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider">
+                  Koreksi Guru
+                </span>
+              </div>
+              <h3 className="font-black text-sm uppercase tracking-tight text-black">
+                2. Soal Essay
+              </h3>
+              <p className="mt-1 text-xs text-gray-500 leading-relaxed">
+                Tugas pertanyaan uraian analitis bebas dengan rubrik penskoran terstruktur.
+              </p>
+            </div>
+            <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
+              <span className="text-[11px] font-bold text-gray-400">{countEssay} Tugas</span>
+              <Link
+                href={`${basePath}/tugas/create?tipe=ESSAY`}
+                className="inline-flex items-center gap-1 rounded-lg border border-black bg-black px-2.5 py-1 text-[11px] font-black text-white hover:bg-neutral-800 transition-colors"
+              >
+                + Buat Essay →
+              </Link>
+            </div>
+          </div>
+
+          {/* Card 3: Tugas Mandiri */}
+          <div className="rounded-2xl border-2 border-black bg-white p-5 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-black text-white">
+                  <Icon name="person" size={20} />
+                </div>
+                <span className="rounded-full bg-gray-100 text-black px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider border border-black">
+                  Individu
+                </span>
+              </div>
+              <h3 className="font-black text-sm uppercase tracking-tight text-black">
+                3. Tugas Mandiri
+              </h3>
+              <p className="mt-1 text-xs text-gray-500 leading-relaxed">
+                Penugasan individual untuk laporan studi kasus dan pengumpulan dokumen.
+              </p>
+            </div>
+            <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
+              <span className="text-[11px] font-bold text-gray-400">{countMandiri} Tugas</span>
+              <Link
+                href={`${basePath}/tugas/create?tipe=MANDIRI`}
+                className="inline-flex items-center gap-1 rounded-lg border border-black bg-black px-2.5 py-1 text-[11px] font-black text-white hover:bg-neutral-800 transition-colors"
+              >
+                + Buat Mandiri →
+              </Link>
+            </div>
+          </div>
+
+          {/* Card 4: Proyek Kelompok */}
+          <div className="rounded-2xl border-2 border-black bg-white p-5 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-black text-white">
+                  <Icon name="groups" size={20} />
+                </div>
+                <span className="rounded-full bg-gray-100 text-black px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider border border-black">
+                  Kolaboratif
+                </span>
+              </div>
+              <h3 className="font-black text-sm uppercase tracking-tight text-black">
+                4. Proyek Kelompok
+              </h3>
+              <p className="mt-1 text-xs text-gray-500 leading-relaxed">
+                Tugas kerja kelompok terstruktur dengan pembagian anggota tim kolaborasi.
+              </p>
+            </div>
+            <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
+              <span className="text-[11px] font-bold text-gray-400">{countKelompok} Tugas</span>
+              <Link
+                href={`${basePath}/tugas/create?tipe=KELOMPOK`}
+                className="inline-flex items-center gap-1 rounded-lg border border-black bg-black px-2.5 py-1 text-[11px] font-black text-white hover:bg-neutral-800 transition-colors"
+              >
+                + Buat Kelompok →
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Filter Tabs & Daftar Tugas */}
+      <section className="mt-10">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-200 pb-3">
+          <SectionTitle icon="list_alt" title="Daftar Tugas Pembelajaran" />
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Link
+              href={`${basePath}/tugas`}
+              className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
+                !activeFilter
+                  ? "bg-black text-white"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              Semua ({myTugas.length})
+            </Link>
+            <Link
+              href={`${basePath}/tugas?filter=MULTIPLE_CHOICE`}
+              className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
+                activeFilter === "MULTIPLE_CHOICE"
+                  ? "bg-black text-white"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              Pilihan Ganda ({countMC})
+            </Link>
+            <Link
+              href={`${basePath}/tugas?filter=ESSAY`}
+              className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
+                activeFilter === "ESSAY"
+                  ? "bg-black text-white"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              Essay ({countEssay})
+            </Link>
+            <Link
+              href={`${basePath}/tugas?filter=MANDIRI`}
+              className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
+                activeFilter === "MANDIRI"
+                  ? "bg-black text-white"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              Mandiri ({countMandiri})
+            </Link>
+            <Link
+              href={`${basePath}/tugas?filter=KELOMPOK`}
+              className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
+                activeFilter === "KELOMPOK"
+                  ? "bg-black text-white"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              Kelompok ({countKelompok})
+            </Link>
+          </div>
+        </div>
+
+        {displayedTugas.length === 0 ? (
+          <div className="mt-4 rounded-xl border border-gray-100 md:rounded-2xl">
+            <EmptyState icon="assignment" text={`Belum ada tugas${activeFilter ? ` untuk kategori ${activeFilter}` : ""}.`} />
           </div>
         ) : (
           <DataTable
@@ -285,7 +355,7 @@ export default async function TugasPage() {
               { label: "Aksi", className: "text-right" },
             ]}
           >
-            {myTugas.map((t, i) => {
+            {displayedTugas.map((t, i) => {
               const countSoal = soalCountMap.get(t.id) ?? 0;
               const isQuestionBased = t.tipe === "MULTIPLE_CHOICE" || t.tipe === "ESSAY";
               return (
