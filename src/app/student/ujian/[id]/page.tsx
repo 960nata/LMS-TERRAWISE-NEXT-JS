@@ -4,10 +4,12 @@ import { ujian, soal, ujianAttempts } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { submitAttempt } from "./actions";
 
+export const instant = false;
+
 export default async function StudentUjianPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await auth();
-  const studentId = (session?.user as any)?.id as string;
+  const studentId = (session?.user as { id: string } | null)?.id as string;
 
   const [u] = await db.select().from(ujian).where(eq(ujian.id, id));
   const soalList = await db.select().from(soal).where(eq(soal.ujianId, id));

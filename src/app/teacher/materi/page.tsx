@@ -4,9 +4,11 @@ import { materi, kelas } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { createMateri } from "./actions";
 
+export const instant = false;
+
 export default async function MateriPage() {
   const session = await auth();
-  const teacherId = (session?.user as any)?.id as string;
+  const teacherId = (session?.user as { id: string } | null)?.id as string;
 
   const myKelas = await db.select().from(kelas).where(eq(kelas.teacherId, teacherId));
   const myMateri = await db

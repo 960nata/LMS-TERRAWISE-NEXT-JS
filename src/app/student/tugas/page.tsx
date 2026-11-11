@@ -4,9 +4,11 @@ import { tugas, kelas, enrollments, tugasSubmissions } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { submitTugas } from "./actions";
 
+export const instant = false;
+
 export default async function StudentTugasPage() {
   const session = await auth();
-  const studentId = (session?.user as any)?.id as string;
+  const studentId = (session?.user as { id: string } | null)?.id as string;
 
   const rows = await db
     .select({ id: tugas.id, title: tugas.title, description: tugas.description, dueDate: tugas.dueDate, kelasName: kelas.name })

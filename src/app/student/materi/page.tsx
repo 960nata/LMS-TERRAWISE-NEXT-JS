@@ -3,9 +3,11 @@ import { db } from "@/lib/db";
 import { materi, kelas, enrollments } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
+export const instant = false;
+
 export default async function StudentMateriPage() {
   const session = await auth();
-  const studentId = (session?.user as any)?.id as string;
+  const studentId = (session?.user as { id: string } | null)?.id as string;
 
   const rows = await db
     .select({ id: materi.id, title: materi.title, content: materi.content, kelasName: kelas.name })

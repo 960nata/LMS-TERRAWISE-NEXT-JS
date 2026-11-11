@@ -3,6 +3,8 @@ import { ujian, soal } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { addSoal } from "../actions";
 
+export const instant = false;
+
 export default async function UjianDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const [u] = await db.select().from(ujian).where(eq(ujian.id, id));

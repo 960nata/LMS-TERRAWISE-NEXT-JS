@@ -4,9 +4,11 @@ import { enrollments, kelas } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import Link from "next/link";
 
+export const instant = false;
+
 export default async function StudentDashboard() {
   const session = await auth();
-  const studentId = (session?.user as any)?.id as string;
+  const studentId = (session?.user as { id: string } | null)?.id as string;
 
   const myKelas = await db
     .select({ id: kelas.id, name: kelas.name, description: kelas.description })
